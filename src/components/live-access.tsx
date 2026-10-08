@@ -38,12 +38,12 @@ export function LiveAccess() {
       await client.invalidateQueries({ queryKey: ["session"] });
       await client.invalidateQueries({ queryKey: ["home", "live"] });
       await client.invalidateQueries({ queryKey: ["esp32-history"] });
-      setMessage(logout ? "Odhlášeno." : "Přihlášeno k místní bráně.");
+      setMessage(logout ? "Odhlášeno." : "Přihlášeno k serverové bráně.");
     } catch (error) {
       setMessage(
         error instanceof Error &&
           ["TypeError", "AbortError", "TimeoutError"].includes(error.name)
-          ? "Místní přihlášení není dostupné. Zkontrolujte spojení."
+          ? "Přihlášení není dostupné. Zkontrolujte spojení."
           : (error as Error).message,
       );
     } finally {
@@ -52,13 +52,13 @@ export function LiveAccess() {
   }
   return (
     <div className="live-access">
-      <strong>Přístup k místní bráně</strong>
+      <strong>Přístup k serverové bráně</strong>
       <p className="note">
         {session.data?.authenticated
           ? "Přihlášeno · relé potvrzuje příkaz GPIO, fyzický stav lampy se neměří."
           : session.data?.configured
-            ? "Přihlaste se heslem místního dashboardu. Klíč ESP32 zůstává pouze na serveru."
-            : "Správce musí nastavit místní server podle dokumentace. Přístup zůstává zamčený."}
+            ? "Přihlaste se heslem dashboardu. Klíč ESP32 zůstává pouze na serveru."
+            : "Správce musí nastavit server podle dokumentace. Přístup zůstává zamčený."}
       </p>
       {session.data?.authenticated ? (
         <Button
@@ -76,7 +76,7 @@ export function LiveAccess() {
           }}
         >
           <label className="field-label">
-            Heslo místního dashboardu
+            Heslo dashboardu
             <input
               type="password"
               autoComplete="current-password"

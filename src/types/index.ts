@@ -3,6 +3,7 @@ export interface DeviceStatus {
   connected: boolean;
   name: string;
   lastUpdate: string | null;
+  sourceLastUpdate?: string | null;
   measurementTimestamp?: string | null;
   bootId?: string;
 }

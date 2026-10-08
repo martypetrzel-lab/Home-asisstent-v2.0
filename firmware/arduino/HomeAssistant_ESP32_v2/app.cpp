@@ -52,6 +52,8 @@ void firmwareSetup() {
                                        nullptr, 0) == pdPASS);
   networkBegin();
   apiBegin();
+  configASSERT(xTaskCreatePinnedToCore(cloudTask, "cloud", 16384, nullptr, 1,
+                                       nullptr, 0) == pdPASS);
   Serial.println("Home Assistant ESP32: spuštěno. Žádné přihlašovací údaje se "
                  "nevypisují.");
 }

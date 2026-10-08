@@ -41,7 +41,7 @@ export async function apiRequest(
     });
   } catch {
     throw new Esp32Error(
-      "ESP32 není připojeno. Zkontrolujte síť a místní bránu.",
+      "ESP32 není připojeno. Zkontrolujte síť a serverovou bránu.",
     );
   }
   let value: unknown;
@@ -114,6 +114,13 @@ export function parseLiveSnapshot(value: unknown): HomeSnapshot {
       !Number.isFinite(Date.parse(root.timestamp)))
   )
     throw new Esp32Error("Neplatný čas ESP32.");
+  if (
+    root.receivedAt !== undefined &&
+    (typeof root.receivedAt !== "string" ||
+      !Number.isFinite(Date.parse(root.receivedAt)) ||
+      Date.parse(root.receivedAt) > Date.now() + 10000)
+  )
+    throw new Esp32Error("Neplatný čas přijetí cloudových dat.");
   const result = emptySnapshot(),
     climates = object(root.climate),
     solar = object(root.solar),
@@ -122,6 +129,8 @@ export function parseLiveSnapshot(value: unknown): HomeSnapshot {
     connected: true,
     name: root.deviceId,
     lastUpdate: new Date().toISOString(),
+    sourceLastUpdate:
+      typeof root.receivedAt === "string" ? root.receivedAt : null,
     measurementTimestamp: root.timestamp as string | null,
     bootId: root.bootId,
   };
@@ -224,7 +233,7 @@ export async function setLiveRelay(
 ): Promise<RelayStatus> {
   if (apiBase(endpoint) !== "/api/esp32")
     throw new Esp32Error(
-      "Ovládání používá přihlášenou místní bránu. Vymažte přímou adresu API v Nastavení.",
+      "Ovládání používá přihlášenou serverovou bránu. Vymažte přímou adresu API v Nastavení.",
     );
   if (commanding)
     throw new Esp32Error("Předchozí příkaz ještě čeká na potvrzení.");

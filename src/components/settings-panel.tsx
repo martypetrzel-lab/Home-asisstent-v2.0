@@ -128,7 +128,7 @@ export function SettingsPanel() {
             <input
               type="url"
               value={endpoint}
-              placeholder="Prázdné = přihlášená místní brána"
+              placeholder="Prázdné = přihlášená serverová brána"
               onChange={(e) => setEndpoint(e.target.value)}
               aria-invalid={invalid}
             />
@@ -158,8 +158,8 @@ export function SettingsPanel() {
           <div className="security-note">
             <ShieldCheck size={19} />
             <p>
-              Ovládání používá přihlášenou místní bránu a klíč ESP32 uložený na
-              serveru. Heslo se neukládá do místního úložiště. Relé musí mít
+              Ovládání používá přihlášenou serverovou bránu a klíč ESP32 uložený
+              na serveru. Heslo se neukládá do místního úložiště. Relé musí mít
               předem ověřenou polaritu.
             </p>
           </div>

@@ -3,6 +3,7 @@
 // Provisional ESP32-WROOM / generic 4 MB esp32dev. Confirm exact board before
 // upload.
 namespace cfg {
+constexpr const char *CloudUrl = "https://home-asisstent-v20-production.up.railway.app/api/device/sync";
 constexpr int IndoorDht = 27, OutdoorDht = 17, Sda = 21, Scl = 22;
 constexpr int Relay = 26, Relay2 = 33, Button = 25, PowerStatus = 32;
 constexpr uint8_t InaAddress = 0x40;

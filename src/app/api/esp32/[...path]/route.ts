@@ -4,6 +4,8 @@ import {
   sameOrigin,
   validSession,
 } from "@/lib/server-auth";
+import { cloudEnabled } from "@/lib/cloud-store";
+import { cloudForward } from "@/lib/cloud-api";
 export const runtime = "nodejs";
 const paths = new Set([
   "state",
@@ -35,6 +37,7 @@ async function forward(request: Request, context: Context) {
   const readAllowed = path.length === 1 && paths.has(route);
   if (request.method === "POST" ? !relayWrite : !readAllowed)
     return jsonResponse({ error: { message: "Endpoint neexistuje." } }, 404);
+  if (cloudEnabled()) return cloudForward(request, route);
   const target = process.env.ESP32_API_URL,
     token = process.env.ESP32_API_TOKEN;
   if (!target || !token || token.length < 32)

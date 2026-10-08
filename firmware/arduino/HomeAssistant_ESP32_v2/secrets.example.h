@@ -8,3 +8,7 @@
 // CORS.
 #define HOME_ALLOWED_ORIGIN ""
 #define HOME_OTA_ENABLED false
+
+// Same value as DEVICE_TOKEN on Railway (at least 32 random characters).
+#define HOME_CLOUD_ENABLED true
+#define HOME_CLOUD_TOKEN ""

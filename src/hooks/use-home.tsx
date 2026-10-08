@@ -66,7 +66,9 @@ export function Providers({ children }: { children: ReactNode }) {
       );
       saved = {
         ...parseTabletPreferences(value),
-        mode: value.mode === "live" ? "live" : "demo",
+        ...(value.mode === "live" || value.mode === "demo"
+          ? { mode: value.mode }
+          : {}),
         theme: value.theme === "light" ? "light" : "dark",
         unit: value.unit === "fahrenheit" ? "fahrenheit" : "celsius",
         kiosk: value.kiosk === true,
@@ -86,7 +88,20 @@ export function Providers({ children }: { children: ReactNode }) {
     // Hydrate browser-only preferences after the first server-compatible render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreferences({ ...defaults, ...saved });
-    setReady(true);
+    let active = true;
+    void fetch("/api/config", {
+      signal: AbortSignal.timeout(3000),
+      cache: "no-store",
+    })
+      .then((r) => r.json())
+      .then((config) => {
+        if (active && !saved.mode && config.defaultMode === "live")
+          setPreferences((p) => ({ ...p, mode: "live" }));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setReady(true);
+      });
     const sync = (event: StorageEvent) => {
       if (event.key === "home-preferences") {
         try {
@@ -97,7 +112,10 @@ export function Providers({ children }: { children: ReactNode }) {
       }
     };
     window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
+    return () => {
+      active = false;
+      window.removeEventListener("storage", sync);
+    };
   }, []);
   useEffect(() => {
     document.documentElement.dataset.theme = preferences.theme;
@@ -157,11 +175,14 @@ export function useHome(range: HistoryRange = "24h") {
         ? Promise.resolve(demoSnapshot(range))
         : getLiveSnapshot(preferences.endpoint, signal));
       if (result.device.lastUpdate) {
-        client.setQueryData(stampKey, result.device.lastUpdate);
+        client.setQueryData(
+          stampKey,
+          result.device.sourceLastUpdate || result.device.lastUpdate,
+        );
         try {
           localStorage.setItem(
             `home-last-update:${preferences.mode}:${preferences.endpoint}`,
-            result.device.lastUpdate,
+            result.device.sourceLastUpdate || result.device.lastUpdate,
           );
         } catch {}
       }
@@ -213,7 +234,9 @@ export function useHome(range: HistoryRange = "24h") {
   const stale =
     preferences.mode === "live" &&
     !!query.data &&
-    !isMeasurementFresh(query.data.device.lastUpdate, now.getTime());
+    (query.data.device.sourceLastUpdate
+      ? now.getTime() - Date.parse(query.data.device.sourceLastUpdate) > 15000
+      : !isMeasurementFresh(query.data.device.lastUpdate, now.getTime()));
   const available =
     query.isError || stale || (!online && preferences.mode === "live")
       ? emptySnapshot()
@@ -265,7 +288,11 @@ export function useHome(range: HistoryRange = "24h") {
     weatherError: weatherQuery.error,
     data,
     historyError: historyQuery.error,
-    lastSuccessfulUpdate: query.data?.device.lastUpdate || stamp.data || null,
+    lastSuccessfulUpdate:
+      query.data?.device.sourceLastUpdate ||
+      query.data?.device.lastUpdate ||
+      stamp.data ||
+      null,
     online,
     stale,
     mode: preferences.mode,

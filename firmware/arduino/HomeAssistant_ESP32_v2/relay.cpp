@@ -7,6 +7,7 @@ struct Command {
   bool on;
   uint32_t expected;
   char id[41];
+  uint64_t expires = 0;
 };
 struct Result {
   uint8_t channel = 1;
@@ -92,7 +93,9 @@ void relayTask(void *) {
     esp_task_wdt_reset();
     Command command;
     if (xQueueReceive(commands, &command, 0) == pdTRUE) {
-      int status = apply(command.channel, command.on, command.expected);
+      int status = command.expires && monotonicMs() >= command.expires
+                       ? 408
+                       : apply(command.channel, command.on, command.expected);
       auto s = snapshot();
       xSemaphoreTake(stateMutex, portMAX_DELAY);
       auto &result = results[resultHead++ % 8];
@@ -146,6 +149,113 @@ void relayTask(void *) {
     vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
+int executeRelay(uint8_t channel, JsonDocument &input, JsonDocument &doc,
+                 uint64_t expires) {
+  auto reject = [&](int status, const char *code, const char *message) {
+    doc["apiVersion"] = 1;
+    doc["error"]["code"] = code;
+    doc["error"]["message"] = message;
+    return status;
+  };
+  if ((channel != 1 && channel != 2) || !logic::validCommand(input))
+    return reject(400, "invalid_body", "Neplatný příkaz relé.");
+  for (JsonPair field : input.as<JsonObject>())
+    if (strcmp(field.key().c_str(), "state") &&
+        strcmp(field.key().c_str(), "expectedVersion") &&
+        strcmp(field.key().c_str(), "requestId") &&
+        strcmp(field.key().c_str(), "bootId")) {
+      return reject(400, "unknown_field", "Neznámé pole příkazu.");
+    }
+  auto s = snapshot();
+  if (input["bootId"].is<const char *>() &&
+      String(input["bootId"].as<const char *>()) != s.bootId) {
+    return reject(409, "restarted",
+                  "ESP32 se restartovalo. Načtěte nový stav.");
+  }
+  if (!input["bootId"].isNull() && !input["bootId"].is<const char *>()) {
+    return reject(400, "boot_id", "Neplatné bootId.");
+  }
+  if (!input["expectedVersion"].isNull() &&
+      !input["expectedVersion"].is<uint32_t>()) {
+    return reject(400, "version", "Neplatná verze relé.");
+  }
+  String id = input["requestId"].is<const char *>()
+                  ? input["requestId"].as<const char *>()
+                  : String(s.bootId) + "-" +
+                        String(static_cast<unsigned long>(esp_random()));
+  if (!input["requestId"].isNull() && !input["requestId"].is<const char *>()) {
+    return reject(400, "request_id", "Neplatné requestId.");
+  }
+  if (!id.length() || id.length() > 40) {
+    return reject(400, "request_id", "requestId musí mít 1–40 znaků.");
+  }
+  for (unsigned i = 0; i < id.length(); ++i)
+    if (!isalnum(id[i]) && id[i] != '-' && id[i] != '_') {
+      return reject(400, "request_id", "Neplatné znaky requestId.");
+    }
+  bool on = input["state"].as<bool>();
+  Result found;
+  xSemaphoreTake(stateMutex, portMAX_DELAY);
+  for (const auto &result : results)
+    if (id == result.id)
+      found = result;
+  xSemaphoreGive(stateMutex);
+  if (found.status) {
+    if (found.on != on || found.channel != channel) {
+      return reject(409, "duplicate_conflict",
+                    "requestId již patří jinému příkazu.");
+    }
+    if (found.status != 200) {
+      return reject(found.status, "command_rejected", "Příkaz nebyl přijat.");
+    }
+  } else {
+    Command cmd{channel,
+                on,
+                input["expectedVersion"].isNull()
+                    ? (channel == 1 ? s.relay.version : s.relay2.version)
+                    : input["expectedVersion"].as<uint32_t>(),
+                {}};
+    cmd.expires = expires;
+    strlcpy(cmd.id, id.c_str(), sizeof(cmd.id));
+    if (xQueueSend(commands, &cmd, 0) != pdTRUE) {
+      return reject(429, "busy", "Relé zpracovává jiný příkaz.");
+    }
+    uint64_t started = monotonicMs();
+    while (monotonicMs() - started < 750 && !found.status) {
+      xSemaphoreTake(stateMutex, portMAX_DELAY);
+      for (const auto &r : results)
+        if (id == r.id)
+          found = r;
+      xSemaphoreGive(stateMutex);
+      delay(5);
+    }
+    if (found.status != 200) {
+      return reject(
+          found.status ? found.status : 504,
+          found.status == 409 ? "conflict" : "command_failed",
+          found.status == 409
+              ? "Stav změnil jiný klient. Načtěte jej znovu."
+              : "GPIO příkaz nebyl potvrzen. Ověřte konfiguraci relé a "
+                "nový stav.");
+    }
+  }
+  doc["apiVersion"] = 1;
+  doc["requestId"] = id;
+  doc["applied"] = true;
+  doc["appliedVersion"] = found.version;
+  doc["requestedState"] = on;
+  doc["bootId"] = s.bootId;
+  auto current = snapshot();
+  auto &confirmed = channel == 1 ? current.relay : current.relay2;
+  confirmed.on = found.on;
+  confirmed.version = found.version;
+  doc["channel"] = channel;
+  writeRelay(doc["relays"][String(channel)].to<JsonObject>(), current, channel);
+  if (channel == 1)
+    writeRelay(doc["lighting"]["kitchenLed"].to<JsonObject>(), current);
+  return 200;
+}
+
 void relayPost(uint8_t channel) {
   if (!apiAuthorize())
     return;
@@ -165,105 +275,7 @@ void relayPost(uint8_t channel) {
              "odpovídat API v1.");
     return;
   }
-  for (JsonPair field : input.as<JsonObject>())
-    if (strcmp(field.key().c_str(), "state") &&
-        strcmp(field.key().c_str(), "expectedVersion") &&
-        strcmp(field.key().c_str(), "requestId") &&
-        strcmp(field.key().c_str(), "bootId")) {
-      apiError(400, "unknown_field", "Neznámé pole příkazu.");
-      return;
-    }
-  auto s = snapshot();
-  if (input["bootId"].is<const char *>() &&
-      String(input["bootId"].as<const char *>()) != s.bootId) {
-    apiError(409, "restarted", "ESP32 se restartovalo. Načtěte nový stav.");
-    return;
-  }
-  if (!input["bootId"].isNull() && !input["bootId"].is<const char *>()) {
-    apiError(400, "boot_id", "Neplatné bootId.");
-    return;
-  }
-  if (!input["expectedVersion"].isNull() &&
-      !input["expectedVersion"].is<uint32_t>()) {
-    apiError(400, "version", "Neplatná verze relé.");
-    return;
-  }
-  String id = input["requestId"].is<const char *>()
-                  ? input["requestId"].as<const char *>()
-                  : String(s.bootId) + "-" +
-                        String(static_cast<unsigned long>(esp_random()));
-  if (!input["requestId"].isNull() && !input["requestId"].is<const char *>()) {
-    apiError(400, "request_id", "Neplatné requestId.");
-    return;
-  }
-  if (!id.length() || id.length() > 40) {
-    apiError(400, "request_id", "requestId musí mít 1–40 znaků.");
-    return;
-  }
-  for (unsigned i = 0; i < id.length(); ++i)
-    if (!isalnum(id[i]) && id[i] != '-' && id[i] != '_') {
-      apiError(400, "request_id", "Neplatné znaky requestId.");
-      return;
-    }
-  bool on = input["state"].as<bool>();
-  Result found;
-  xSemaphoreTake(stateMutex, portMAX_DELAY);
-  for (const auto &result : results)
-    if (id == result.id)
-      found = result;
-  xSemaphoreGive(stateMutex);
-  if (found.status) {
-    if (found.on != on || found.channel != channel) {
-      apiError(409, "duplicate_conflict",
-               "requestId již patří jinému příkazu.");
-      return;
-    }
-    if (found.status != 200) {
-      apiError(found.status, "command_rejected", "Příkaz nebyl přijat.");
-      return;
-    }
-  } else {
-    Command cmd{channel,
-                on,
-                input["expectedVersion"].isNull()
-                    ? (channel == 1 ? s.relay.version : s.relay2.version)
-                    : input["expectedVersion"].as<uint32_t>(),
-                {}};
-    strlcpy(cmd.id, id.c_str(), sizeof(cmd.id));
-    if (xQueueSend(commands, &cmd, 0) != pdTRUE) {
-      apiError(429, "busy", "Relé zpracovává jiný příkaz.");
-      return;
-    }
-    uint64_t started = monotonicMs();
-    while (monotonicMs() - started < 750 && !found.status) {
-      xSemaphoreTake(stateMutex, portMAX_DELAY);
-      for (const auto &r : results)
-        if (id == r.id)
-          found = r;
-      xSemaphoreGive(stateMutex);
-      delay(5);
-    }
-    if (found.status != 200) {
-      apiError(found.status ? found.status : 504,
-               found.status == 409 ? "conflict" : "command_failed",
-               found.status == 409
-                   ? "Stav změnil jiný klient. Načtěte jej znovu."
-                   : "GPIO příkaz nebyl potvrzen. Ověřte konfiguraci relé a "
-                     "nový stav.");
-      return;
-    }
-  }
   JsonDocument doc;
-  doc["apiVersion"] = 1;
-  doc["requestId"] = id;
-  doc["applied"] = true;
-  doc["appliedVersion"] = found.version;
-  doc["requestedState"] = on;
-  doc["bootId"] = s.bootId;
-  auto current = snapshot();
-  doc["channel"] = channel;
-  writeRelay(doc["relays"][String(channel)].to<JsonObject>(), current, channel);
-  if (channel == 1)
-    writeRelay(doc["lighting"]["kitchenLed"].to<JsonObject>(), current);
-  apiSend(doc);
+  int status = executeRelay(channel, input, doc, 0);
+  apiSend(doc, status);
 }

@@ -37,3 +37,13 @@ Prohlížeč používá `/api/esp32/*`, `/api/session`, podepsanou HttpOnly Same
 `GET /api/weather?location=Nehvizdy` je oddělený veřejný čtecí endpoint bez klíče ESP32. Vrací weather, hourly (24), forecast (7), fetchedAt, location, stale. Server volá pevné HTTPS adresy Open-Meteo s ověřením TLS, timeoutem a omezenou paměťovou keší (16 míst, 8 souběžných obnov). Nehvizdy zachovávají původní souřadnice; jiná místa se vyhledají geokódováním, zobrazuje se nalezený název. Při shodných názvech upřesněte místo v Nastavení.
 
 Keš 10 min; při chybě se označí starší data do 60 min, poté 503 a Nedostupné. Obnova po chybě nejdříve za 60 s. Síťová chyba počasí neblokuje lokální ESP32, relé ani DHT22. Demo používá výslovně označenou simulaci. [Open-Meteo API a jednotky](https://open-meteo.com/en/docs), [geokódování](https://open-meteo.com/en/docs/geocoding-api).
+
+## Cloud transport v1
+
+Set ESP32_TRANSPORT=cloud. POST /api/device/sync requires Authorization: Bearer DEVICE_TOKEN and a JSON body <=24576 bytes:
+`{protocolVersion:1,sequence:1,state:<complete API v1 state>,ack:null}`.
+The sequence increases per push within one bootId. Duplicate sequence numbers do not refresh device freshness. A retired bootId cannot replace a newer session. One configured DEVICE_ID is accepted. Response: `{protocolVersion:1,accepted:true,serverTime:<epoch milliseconds>,command:null|{channel,state,expectedVersion,bootId,requestId,expiresAtMs,validForMs}}`.
+
+An executed command is returned on the next push as `ack:{requestId,channel,status,result:<existing GPIO ACK or error>}`. The device retains its ACK until a successful sync. A command expires after 10 seconds and is bound to bootId/version; the web request waits 6 seconds for the ACK, otherwise returns 504 and asks to refresh state. GPIO ACK confirms the applied output command only.
+
+Authenticated dashboard routes /api/esp32/state and /api/esp32/history use the SQLite volume. Existing session and Origin checks protect both relay command routes. GET /api/config exposes only transport and initial display mode. Cloud state includes receivedAt and transport; sensor ages include transit and time since receipt. After 15 seconds without a new sequence, state returns 503. /api/esp32/version and /health return cloud gateway status, while device firmware diagnostics remain in state.system. SQLite requires one Railway replica and a persistent /data volume. See RAILWAY.md.

@@ -25,6 +25,13 @@ jobs:
         with:
           node-version: 22
       - run: pip install platformio==6.1.19
+      - name: Enable cloud code for compile and size checks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('firmware/arduino/HomeAssistant_ESP32_v2')
+          (p / 'secrets.h').write_text((p / 'secrets.example.h').read_text().replace('#define HOME_CLOUD_TOKEN ""', '#define HOME_CLOUD_TOKEN "compile-test-only-000000000000000000000000"'))
+          PY
       - run: pio run -d firmware
       - run: pio run -d firmware -t buildfs
       - run: node scripts/test-firmware-core.mjs
@@ -32,6 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Enable cloud code for compile and size checks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('firmware/arduino/HomeAssistant_ESP32_v2')
+          (p / 'secrets.h').write_text((p / 'secrets.example.h').read_text().replace('#define HOME_CLOUD_TOKEN ""', '#define HOME_CLOUD_TOKEN "compile-test-only-000000000000000000000000"'))
+          PY
       - uses: arduino/setup-arduino-cli@v2
         with:
           version: "1.5.0"

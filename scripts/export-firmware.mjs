@@ -6,7 +6,9 @@ const source = resolve("firmware/arduino/HomeAssistant_ESP32_v2");
 const destination = resolve("exports/HomeAssistant_ESP32_v2_full");
 const files = [
   "secrets.example.h",
+  "secrets_config.h",
   "config.h",
+  "cloud-ca.h",
   "src/core/logic.h",
   "model.h",
   "modules.h",
@@ -17,6 +19,7 @@ const files = [
   "relay.cpp",
   "network.cpp",
   "api.cpp",
+  "cloud.cpp",
   "HomeAssistant_ESP32_v2.ino",
 ];
 const includes = new Set(["#include <Arduino.h>"]);
@@ -44,10 +47,11 @@ const header = `// HOME ASSISTANT ESP32 v2.2.0 — COMPLETE SINGLE-FILE EXPORT
 // Board: ESP32 Dev Module, Espressif core 3.3.8, WROOM, 4 MB, PSRAM disabled.
 // Libraries: ArduinoJson 7.4.3, DHT sensor library 1.4.7,
 // Adafruit INA219 1.2.3, Unified Sensor 1.1.15, BusIO 1.17.4.
-// Fill HOME_WIFI_SSID, HOME_WIFI_PASSWORD and HOME_API_TOKEN below before uploading.
-// HOME_API_TOKEN must contain at least 32 random characters.
+// Fill HOME_WIFI_SSID, HOME_WIFI_PASSWORD and HOME_CLOUD_TOKEN below before uploading.
+// HOME_CLOUD_TOKEN must match Railway DEVICE_TOKEN (at least 32 characters).
+// HOME_API_TOKEN is optional and only unlocks the separate local HTTP API.
 // Both relays are ACTIVE LOW and boot OFF. Optional TPS/button/OTA default OFF.
-// Internet weather runs on the separate local dashboard server.
+// Cloud telemetry and weather use the Railway dashboard.
 // Do not place this file in the modular sketch folder: it already contains everything.
 \n`;
 const path = join(destination, "HomeAssistant_ESP32_v2_full.ino");

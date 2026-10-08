@@ -28,3 +28,7 @@ extern WebServer server;
 
 void firmwareSetup();
 void firmwareLoop();
+
+int executeRelay(uint8_t channel, JsonDocument &input, JsonDocument &doc,
+                 uint64_t expires);
+void cloudTask(void *);

@@ -11,3 +11,7 @@ Postup Library Manageru, USB, LittleFS a OTA: [FLASHING](../docs/FLASHING.md). Z
 Žádný fyzický test ani automatický upload nebyl proveden. Neověřený směr proudu blokuje energii; bateriová měření jsou null. Tablet je napájen nezávisle.
 
 Pro úplný firmware v jediném souboru spusťte z kořene projektu `node scripts/export-firmware.mjs`. Vytvoří `exports/HomeAssistant_ESP32_v2_full/HomeAssistant_ESP32_v2_full.ino` se všemi moduly a prázdnými přístupovými údaji. Otevřete jej samostatně v Arduino IDE; nevkládejte do modulární složky, vznikly by duplicitní definice. Export je generovaný ze stejné implementace a nikdy nečte místní secrets.h. Vyplňte vlastní údaje v jeho úvodu. Složka exports je ignorovaná Gitem, aby se pozdější vyplněná hesla necommitovala.
+
+## Railway cloud
+
+Firmware supports outbound verified HTTPS sync and GPIO-confirmed relay commands. See [Railway setup](../docs/RAILWAY.md). Set HOME_CLOUD_TOKEN equal to Railway DEVICE_TOKEN. HOME_API_TOKEN is only needed for the optional local HTTP API.
