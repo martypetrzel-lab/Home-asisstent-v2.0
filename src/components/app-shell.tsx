@@ -1,12 +1,16 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
 import {
-  Activity,
+  useEffect,
+  useState,
+  useRef,
+  type ReactNode,
+  type CSSProperties,
+} from "react";
+import {
   ArrowUpRight,
   ChartNoAxesCombined,
-  ChevronRight,
   CloudSun,
   House,
   LayoutDashboard,
@@ -15,14 +19,16 @@ import {
   Moon,
   Settings,
   ShieldCheck,
-  Sun,
   WifiOff,
   Zap,
 } from "lucide-react";
 import { useHome, usePreferences } from "@/hooks/use-home";
+import { useClock } from "@/hooks/use-display";
 import { ConnectionStatus } from "@/components/dashboard/cards";
 import { time } from "@/lib/utils";
+import { isQuietTime } from "@/lib/tablet";
 import { Button } from "@/components/ui/button";
+import { PwaRegistration } from "@/components/tablet/pwa-registration";
 const nav = [
   { href: "/", label: "Přehled", icon: LayoutDashboard },
   { href: "/domacnost", label: "Domácnost", icon: House },
@@ -50,39 +56,91 @@ export function Navigation() {
     </nav>
   );
 }
+async function enterFullscreen(landscape: boolean) {
+  if (!document.fullscreenElement) {
+    if (!document.documentElement.requestFullscreen)
+      throw new Error("Celá obrazovka není podporována.");
+    await document.documentElement.requestFullscreen();
+  }
+  if (landscape) {
+    const orientation = screen.orientation as ScreenOrientation & {
+      lock?: (value: string) => Promise<void>;
+    };
+    try {
+      await orientation.lock?.("landscape");
+    } catch {
+      /* Device may not support orientation lock. */
+    }
+  }
+}
+export function FullscreenButton() {
+  const { preferences } = usePreferences();
+  const [message, setMessage] = useState("");
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const change = () => setActive(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", change);
+    return () => document.removeEventListener("fullscreenchange", change);
+  }, []);
+  return (
+    <div className="fullscreen-control">
+      <Button
+        variant="outline"
+        onClick={async () => {
+          try {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else await enterFullscreen(preferences.landscape);
+            setMessage("");
+          } catch {
+            setMessage(
+              "Celá obrazovka není dostupná. Rozhraní zůstává funkční; použijte PWA nebo kiosk prohlížeč.",
+            );
+          }
+        }}
+      >
+        {active ? <Minimize size={18} /> : <Maximize size={18} />}{" "}
+        {active ? "Ukončit celou obrazovku" : "Celá obrazovka"}
+      </Button>
+      {message && (
+        <p className="note" role="status">
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
 export function KioskModeToggle() {
   const { preferences, update } = usePreferences();
   const [message, setMessage] = useState("");
-  async function toggle() {
-    const next = !preferences.kiosk;
-    update({ kiosk: next });
-    try {
-      if (next && !document.fullscreenElement)
-        await document.documentElement.requestFullscreen();
-      else if (!next && document.fullscreenElement)
-        await document.exitFullscreen();
-    } catch {
-      setMessage(
-        "Prohlížeč nepovolil celou obrazovku. Rozložení tabletu je aktivní.",
-      );
-    }
-  }
   return (
     <>
       <button
-        onClick={toggle}
         className="kiosk-toggle"
         aria-label={
           preferences.kiosk ? "Ukončit režim tabletu" : "Spustit režim tabletu"
         }
+        onClick={async () => {
+          const next = !preferences.kiosk;
+          update({ kiosk: next });
+          try {
+            if (next) await enterFullscreen(preferences.landscape);
+            else if (document.fullscreenElement)
+              await document.exitFullscreen();
+            setMessage("");
+          } catch {
+            setMessage(
+              "Prohlížeč nepovolil celou obrazovku. Rozložení tabletu je aktivní.",
+            );
+          }
+        }}
       >
-        {preferences.kiosk ? <Minimize size={17} /> : <Maximize size={17} />}
+        {preferences.kiosk ? <Minimize size={18} /> : <Maximize size={18} />}
         <span>
           {preferences.kiosk ? "Ukončit režim tabletu" : "Režim tabletu"}
         </span>
       </button>
       {message && (
-        <p role="status" className="note">
+        <p className="note" role="status">
           {message}
         </p>
       )}
@@ -91,105 +149,163 @@ export function KioskModeToggle() {
 }
 export function DashboardHeader() {
   const path = usePathname();
-  const { data, mode } = useHome();
-  const { preferences, update } = usePreferences();
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
+  const { data, mode, lastSuccessfulUpdate, online } = useHome();
+  const now = useClock();
   return (
     <header className="dashboard-header">
       <div className="breadcrumb">
-        Domov <ChevronRight size={13} />
-        <strong>{nav.find((n) => n.href === path)?.label || "Přehled"}</strong>
+        <House size={19} />
+        <div>
+          <strong>
+            home<span>assistant</span>
+          </strong>
+          <small>{nav.find((n) => n.href === path)?.label} · ESP32</small>
+        </div>
+      </div>
+      <div className="header-clock">
+        <strong>{time(now)}</strong>
+        <span>
+          {now.toLocaleDateString("cs-CZ", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            timeZone: "Europe/Prague",
+          })}
+        </span>
       </div>
       <div className="header-right">
-        <div className="header-date">
-          <strong>{now ? time(now) : "—:—"}</strong>
-          <span>
-            {now
-              ? now.toLocaleDateString("cs-CZ", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  timeZone: "Europe/Prague",
-                })
-              : "Načítání data"}
-          </span>
-        </div>
-        <div className="header-divider" />
         <div className="header-connection">
           <ConnectionStatus />
           <small>
-            {data.device.lastUpdate
-              ? `Aktualizováno ${time(data.device.lastUpdate)}`
-              : "Bez úspěšné aktualizace"}
+            {!online
+              ? "Prohlížeč je offline"
+              : lastSuccessfulUpdate
+                ? `${data.device.connected ? "Aktualizace" : "Naposledy"} ${time(lastSuccessfulUpdate)}`
+                : "Bez úspěšné aktualizace"}
           </small>
         </div>
         <span className={`mode-badge ${mode === "live" ? "live" : ""}`}>
           <span className="status-dot" />
           {mode === "demo" ? "DEMO REŽIM" : "ŽIVÝ REŽIM"}
         </span>
-        <button
-          className="icon-button theme-toggle"
-          aria-label={
-            preferences.theme === "dark" ? "Světlý vzhled" : "Tmavý vzhled"
-          }
-          onClick={() =>
-            update({ theme: preferences.theme === "dark" ? "light" : "dark" })
-          }
-        >
-          {preferences.theme === "dark" ? (
-            <Sun size={18} />
-          ) : (
-            <Moon size={18} />
-          )}
-        </button>
         <Link
           href="/nastaveni"
           className="icon-button"
           aria-label="Otevřít nastavení"
         >
-          <Settings size={19} />
+          <Settings size={21} />
         </Link>
       </div>
     </header>
   );
 }
-export function AppShell({ children }: { children: ReactNode }) {
+function ScreenPreservation() {
   const { preferences } = usePreferences();
-  const { isError, error, isLoading, refetch } = useHome();
-  const [sleeping, setSleeping] = useState(false);
+  const now = useClock();
+  const [idle, setIdle] = useState<"active" | "dim" | "saver">("active");
+  const idleRef = useRef(idle);
   useEffect(() => {
-    if (!preferences.kiosk || !preferences.screensaver) return;
-    let timeout: ReturnType<typeof setTimeout>;
-    const reset = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => setSleeping(true), 120000);
+    let dimTimer: ReturnType<typeof setTimeout>;
+    let saverTimer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      clearTimeout(dimTimer);
+      clearTimeout(saverTimer);
+      if (preferences.autoDim)
+        dimTimer = setTimeout(() => {
+          if (idleRef.current === "saver") return;
+          idleRef.current = "dim";
+          setIdle("dim");
+        }, preferences.dimAfter * 1000);
+      if (preferences.screensaver)
+        saverTimer = setTimeout(() => {
+          idleRef.current = "saver";
+          setIdle("saver");
+        }, preferences.saverAfter * 1000);
     };
-    const events = ["pointerdown", "keydown", "touchstart"];
-    events.forEach((e) => window.addEventListener(e, reset));
-    reset();
+    const activity = (event: Event) => {
+      if (idleRef.current !== "active") {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      idleRef.current = "active";
+      setIdle("active");
+      schedule();
+    };
+    schedule();
+    const events = ["pointerdown", "keydown"];
+    events.forEach((e) => window.addEventListener(e, activity, true));
     return () => {
-      clearTimeout(timeout);
-      events.forEach((e) => window.removeEventListener(e, reset));
+      clearTimeout(dimTimer);
+      clearTimeout(saverTimer);
+      events.forEach((e) => window.removeEventListener(e, activity, true));
     };
-  }, [preferences.kiosk, preferences.screensaver]);
-  useEffect(() => {
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSleeping(false);
-    };
-    window.addEventListener("keydown", escape);
-    return () => window.removeEventListener("keydown", escape);
-  }, []);
+  }, [
+    preferences.autoDim,
+    preferences.dimAfter,
+    preferences.screensaver,
+    preferences.saverAfter,
+  ]);
+  const saver = idle === "saver" && preferences.screensaver;
+  const dim = idle === "dim" && preferences.autoDim;
+  if (!saver && !dim) return null;
   return (
     <div
-      className={`app-shell ${preferences.kiosk ? "kiosk" : ""} ${preferences.dim && preferences.kiosk ? "dimmed" : ""}`}
+      className={saver ? "screensaver clock-screensaver" : "idle-dim-overlay"}
     >
-      <a href="#main" className="skip-link">
+      <button
+        autoFocus
+        aria-label="Probudit ovládací panel"
+        onClick={() => setIdle("active")}
+      >
+        {saver ? (
+          <>
+            <Moon size={28} />
+            <strong>{time(now)}</strong>
+            <span>
+              {now.toLocaleDateString("cs-CZ", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                timeZone: "Europe/Prague",
+              })}
+            </span>
+          </>
+        ) : null}
+        <small>Klepnutím probudíte panel</small>
+      </button>
+    </div>
+  );
+}
+export function AppShell({ children }: { children: ReactNode }) {
+  const { preferences } = usePreferences();
+  const path = usePathname();
+  const now = useClock(30000);
+  const {
+    isError,
+    error,
+    isLoading,
+    refetch,
+    online,
+    stale,
+    lastSuccessfulUpdate,
+    mode,
+  } = useHome();
+  const night =
+    preferences.nightEnabled &&
+    isQuietTime(now, preferences.nightStart, preferences.nightEnd);
+  const overview = path === "/";
+  const variables = {
+    "--bezel": `${preferences.safeMargin}px`,
+    "--ui-scale": preferences.uiScale / 100,
+    "--touch-size": `${preferences.touchSize}px`,
+  } as CSSProperties;
+  return (
+    <div
+      style={variables}
+      className={`app-shell ${overview ? "overview-route" : ""} ${preferences.kiosk ? "kiosk" : ""} ${preferences.dim ? "manual-dim" : ""} ${night ? "night-mode" : ""} ${preferences.reducedMotion ? "reduced-motion" : ""} ${preferences.flipped ? "flipped" : ""}`}
+    >
+      <PwaRegistration />
+      <a className="skip-link" href="#main">
         Přejít k obsahu
       </a>
       <aside className="sidebar">
@@ -199,16 +315,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           aria-label="Home Assistant ESP32 — Přehled"
         >
           <span className="brand-symbol">
-            <House size={25} strokeWidth={1.7} />
-            <i />
+            <House size={25} />
           </span>
           <div>
             <strong>
               home<span>assistant</span>
             </strong>
-            <small>
-              ESP32 <span> / </span> V2.0
-            </small>
+            <small>ESP32 / V2.1</small>
           </div>
         </Link>
         <div className="nav-group-label">VAŠE DOMÁCNOST</div>
@@ -218,41 +331,44 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div>
               <ShieldCheck size={16} />
               <strong>
-                {preferences.mode === "demo"
-                  ? "Bezpečný demo režim"
-                  : "Živá data"}
+                {mode === "demo" ? "Bezpečný demo režim" : "Živá data"}
               </strong>
             </div>
             <p>
-              {preferences.mode === "demo"
-                ? "Prozkoumejte svůj nový domov. Všechna data jsou simulovaná."
-                : "Bez připojeného zařízení nejsou měření dostupná."}
+              {mode === "demo"
+                ? "Všechna měření jsou simulovaná."
+                : "Měření z připojeného zařízení."}
             </p>
             <Link href="/nastaveni">
-              Nastavení připojení <ArrowUpRight size={14} />
+              Nastavení tabletu <ArrowUpRight size={14} />
             </Link>
           </div>
           <KioskModeToggle />
-          <div className="sidebar-version">
-            <span className="status-dot" /> Home Assistant ESP32{" "}
-            <small>2.0.0</small>
-          </div>
         </div>
       </aside>
       <div className="workspace">
         <DashboardHeader />
         <main id="main">
-          {preferences.kiosk && (
-            <div className="kiosk-exit">
-              <KioskModeToggle />
-            </div>
-          )}
-          {isError && (
+          {(isError || !online || stale) && (
             <div role="alert" className="error-banner">
               <WifiOff size={20} />
               <div>
-                <strong>Zařízení není dostupné</strong>
-                <p>{error?.message}</p>
+                <strong>
+                  {!online
+                    ? "Síť není dostupná"
+                    : stale
+                      ? "Měření není aktuální"
+                      : "Zařízení není dostupné"}
+                </strong>
+                <p>
+                  {!online
+                    ? mode === "demo"
+                      ? "Offline rozhraní · demo data jsou simulovaná."
+                      : "Živá měření jsou skryta. Připojení se obnoví automaticky."
+                    : stale
+                      ? "Čekám na čerstvá data z ESP32."
+                      : error?.message}
+                </p>
               </div>
               <Button variant="outline" onClick={() => void refetch()}>
                 Zkusit znovu
@@ -261,21 +377,32 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
           {isLoading && (
             <div role="status" className="loading-bar">
-              <Activity size={15} /> Načítání měření…
+              Načítání měření…
             </div>
           )}
           {children}
         </main>
+        <footer className="panel-footer">
+          <Navigation />
+          <div className="panel-status">
+            <span className="status-dot" />
+            {!online
+              ? "Offline"
+              : mode === "demo"
+                ? "Simulovaná domácnost"
+                : isError || stale
+                  ? "Čeká na spojení"
+                  : "ESP32 připojeno"}
+            <small>
+              {lastSuccessfulUpdate
+                ? `Poslední data ${time(lastSuccessfulUpdate)}`
+                : "Bez měření"}
+            </small>
+          </div>
+          {preferences.kiosk && <KioskModeToggle />}
+        </footer>
       </div>
-      {sleeping && preferences.kiosk && preferences.screensaver && (
-        <div className="screensaver">
-          <button onClick={() => setSleeping(false)}>
-            <Moon size={38} />
-            <strong>Váš domov odpočívá.</strong>
-            <span>Klepněte pro návrat</span>
-          </button>
-        </div>
-      )}
+      <ScreenPreservation />
     </div>
   );
 }

@@ -94,4 +94,16 @@ export interface Preferences {
   location: string;
   refresh: number;
   endpoint: string;
+  safeMargin: number;
+  uiScale: number;
+  touchSize: number;
+  flipped: boolean;
+  landscape: boolean;
+  nightEnabled: boolean;
+  nightStart: string;
+  nightEnd: string;
+  autoDim: boolean;
+  dimAfter: number;
+  saverAfter: number;
+  reducedMotion: boolean;
 }

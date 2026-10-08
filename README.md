@@ -2,7 +2,7 @@
 
 České tabletové rozhraní pro přehled domácnosti, klima, kuchyňské světlo a solární energii. **Fáze 1 je pouze frontend.** Repozitář neobsahuje firmware, zapojení GPIO ani skutečné ovládání relé.
 
-![Tmavý tabletový přehled](docs/screenshots/dark-tablet.jpg)
+![Tabletový přehled 1280 × 800](docs/screenshots/kiosk-1280x800.jpg)
 
 ## Spuštění
 
@@ -28,7 +28,7 @@ Volitelně zkopírujte `.env.example` do `.env.local` a nastavte `NEXT_PUBLIC_ES
 
 | Stránka                | Obsah                                                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Přehled `/`            | Klima uvnitř a venku, počasí, světlo, solární výkon, mini historie, stav jednotky, čas a poslední aktualizace               |
+| Přehled `/`            | Jedna obrazovka na šířku: klima, aktuální/denní/hodinové počasí, světlo, solární výkon, baterie, zdroj, čas a navigace      |
 | Domácnost `/domacnost` | DHT22 senzory, rozdíly, minima a maxima, teplota a vlhkost v čase, ovládání světla                                          |
 | Počasí `/pocasi`       | Simulované aktuální počasí, hodinový výhled a graf, sedm dní, déšť, vítr, nárazy, tlak, východ a západ slunce               |
 | Energie `/energie`     | Panel, INA219, AGM baterie, dostupnost zdrojů, denní a týdenní grafy, plánovaný tok energie včetně samostatné větve tabletu |
@@ -87,7 +87,26 @@ Komponenty neprovádějí požadavky na zařízení. API lze později rozšíři
 
 ## Režim tabletu
 
-Tlačítko „Režim tabletu“ aktivuje rozložení bez postranní navigace a pokusí se otevřít fullscreen. Při zamítnutí prohlížečem funguje rozložení dál a zobrazí vysvětlení. Tlačítko pro ukončení zůstává dostupné. Ztlumení je pouze vizuální filtr stránky, nikoliv systémový jas. Volitelný šetřič se zapne po dvou minutách nečinnosti, má pohybující se obsah a lze jej zavřít dotykem nebo Escape. Nelze zaručit ochranu proti vypálení ani zabránění uspání Androidu; to vyžaduje nastavení zařízení.
+Přehled na šířku má pevnou výšku dostupného viewportu a tři oblasti CSS Grid. Ostatní stránky mohou posouvat obsah. V nastavení je samostatný „Tabletový režim“: okraj 0–40 px (výchozí 16), měřítko 90–115 %, tlačítka 48/52/56 px, prohození levé a pravé strany, preference orientace, fullscreen, noční plán, ztlumení a hodinový šetřič. Preference se ukládají místně v prohlížeči. Při malé dostupné výšce se zkrátí doplňkové popisky; časovač světla je nadále na stránce Domácnost.
+
+Noční plán používá časovou zónu Europe/Prague, podporuje interval přes půlnoc a přepne na tmavé ztlumené barvy. Stejný začátek a konec plán vypne. Automatické ztlumení má volitelnou prodlevu 30 s / 1 / 2 / 5 min; hodinový šetřič 2 / 5 / 10 min. První dotyk nebo klávesa probudí panel a neaktivuje ovládání pod překryvem. Omezení animací vypne i pohyb hodin. Ztlumení je pouze vzhled stránky; nemění hardwarový jas a nezaručuje ochranu proti vypálení.
+
+## Instalace na tablet do 3D tištěného rámečku
+
+1. Spusťte produkční sestavení na trvale dostupném serveru (`npm run build`, `npm start`). Na tabletu otevřete jeho **HTTPS adresu s platným certifikátem**. `localhost` je výjimka pro testování na stejném zařízení; HTTP adresa počítače v domácí síti není pro PWA rovnocenná localhostu. Použijte aktuální Chrome nebo kompatibilní Android prohlížeč.
+2. Nechte první načtení dokončit při dostupné síti. Nabídkou prohlížeče „Nainstalovat aplikaci“ / „Přidat na plochu“ nainstalujte PWA a spusťte ji z ikony. Manifest má režim `standalone`, orientaci `landscape`, barvu motivu a ikony 192/512 px včetně maskovatelné. Dostupnost instalace závisí na prohlížeči; viz [podmínky instalovatelnosti PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable).
+3. V Nastavení → Tabletový režim začněte s okrajem **16 CSS px**, měřítkem 100 % a tlačítky 52 px. Nasaďte rámeček a ověřte prstem horní nastavení, spodní navigaci i světlo. Podle skutečného překrytí zvětšete okraj; systémové safe-area insets se přičítají. Rozhodují dostupné CSS pixely, nikoli fyzické rozlišení displeje. Změna systémové velikosti zobrazení může změnit dostupný prostor.
+4. Klepnutím na „Celá obrazovka“ nebo „Režim tabletu“ vyvolejte Fullscreen API. Orientaci se aplikace pokusí zamknout jen při této akci. Při odmítnutí zobrazí vysvětlení a zůstane funkční. Orientaci nastavte také v Androidu nebo kiosk aplikaci. Fullscreen je dočasný a po znovuotevření může vyžadovat další dotyk.
+
+**PWA sama Android nezamyká a nezajišťuje automatický start po restartu.** Pro trvalý panel použijte kiosk prohlížeč, například [Fully Kiosk Browser a jeho oficiální návod](https://www.fully-kiosk.com/en/). Nastavte adresu této aplikace jako Start URL, spuštění po bootu, orientaci na šířku, skrytí adresního řádku a podporovaných systémových lišt, zákaz přepínání aplikací a vlastní způsob ukončení kiosku s PIN. Nastavte zachování zapnutého displeje a obnovu stránky při návratu sítě nebo chybě načtení. Konkrétní volby, oprávnění a případná placená licence závisí na zařízení a verzi kiosk softwaru. Globální zákaz posouvání nezapínejte: vedlejší stránky jej potřebují. Automatické mazání webového úložiště/cache by odstranilo preference a offline shell.
+
+Pro spravovaný tablet lze použít podporované řešení **Android Enterprise device owner** s povolenou kiosk aplikací a **lock task mode**. Správce nastavuje povolené aplikace, systémové ovládání a spuštění kiosku; obyčejné připnutí obrazovky neposkytuje stejnou ochranu. Postup správy a dostupné systémové funkce popisuje [Android lock task mode](https://developer.android.com/work/dpc/dedicated-devices/lock-task-mode). Provisioning může vyžadovat přípravu či reset zařízení; tento frontend správu Androidu neprovádí.
+
+V Androidu nastavte přiměřený **hardwarový jas**, dobu zhasnutí obrazovky a podle podporovaných možností výjimku pro úsporu energie kiosk aplikace. Ověřte probuzení po restartu i po přerušení napájení. Webová vrstva neslibuje spolehlivé zabránění uspání na každém Androidu; fyzicky zhasnutý displej samotný webový dotykový překryv neprobudí. Zvolte jeden hlavní plán uspávání/probouzení v Androidu nebo kiosku a sladěte jej s nočním plánem aplikace.
+
+**Offline a obnova spojení:** service worker ukládá stránky a jejich místní statické soubory, nikoli ESP32 API, živá měření ani zapisovací požadavky. Po prvním úspěšném načtení může zobrazit rozhraní i při výpadku serveru. Browser offline stav nebo chyba/stáří API skryje živé hodnoty. Uloží se pouze čas posledního úspěšného měření, odděleně pro režim a endpoint; přežije obnovení stránky. Dotazy se opakují ve zvoleném intervalu a při návratu připojení. Demo zůstává viditelně označenou simulací i offline. Cache může Android/prohlížeč odstranit, proto ji nepovažujte za náhradu spolehlivého serveru.
+
+Po nové verzi se offline shell uloží do nové cache; čekající service worker se aktivuje po zavření všech oken této aplikace. Pro aktualizaci ukončete její PWA/kiosk okna a znovu otevřete stránku online. Před montáží prakticky vyzkoušejte restart tabletu, ztrátu Wi-Fi, obnovení stránky bez serveru, návrat API, noční plán a první dotyk po ztlumení. Automatický start, systémové lišty a dlouhodobý provoz je nutné ověřit na konkrétním tabletu.
 
 ## Ověření
 
@@ -98,11 +117,14 @@ npm test
 npm run build
 ```
 
-Osm testů ověřuje prázdný živý stav, oddělení dat, nepodporovaný hardware, zastaralé odpovědi, bezpečný formát adresy, období historie, potvrzení relé a chyby živých požadavků. Automatická kontrola na GitHubu spouští stejné kroky.
+Čtrnáct testů ověřuje datovou vrstvu, potvrzení demo relé, noční intervaly, validaci tabletových preferencí, stáří měření, offline fallback, oddělení API od cache a vytvoření spustitelného service workeru. Automatická kontrola na GitHubu spouští stejné kroky.
 
 Ruční prohlížečová kontrola a rozsah ověření jsou v [docs/VALIDACE.md](docs/VALIDACE.md). Snímky obsahují výhradně simulované hodnoty nebo nepřipojený živý stav:
 
-- [Tmavý tablet](docs/screenshots/dark-tablet.jpg)
+- [1024 × 600](docs/screenshots/kiosk-1024x600.jpg)
+- [1280 × 800](docs/screenshots/kiosk-1280x800.jpg)
+- [1920 × 1200](docs/screenshots/kiosk-1920x1200.jpg)
+- [Portrét 800 × 1280](docs/screenshots/kiosk-800x1280.jpg)
 - [Světlý tablet](docs/screenshots/light-tablet.jpg)
 - [Telefon](docs/screenshots/mobile-overview.jpg)
 - [Živý režim bez zařízení](docs/screenshots/live-unavailable.jpg)

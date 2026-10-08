@@ -5,4 +5,5 @@ out/
 !.env.example
 *.tsbuildinfo
 next-env.d.ts
+public/sw.js
 test-results/

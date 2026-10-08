@@ -22,7 +22,14 @@ import {
   subscribeDemo,
 } from "@/services/data";
 import type { Preferences, HistoryRange } from "@/types";
+import {
+  isMeasurementFresh,
+  parseTabletPreferences,
+  tabletDefaults,
+} from "@/lib/tablet";
+import { useClock, useConnectivity } from "./use-display";
 const defaults: Preferences = {
+  ...tabletDefaults,
   mode: "demo",
   theme: "dark",
   kiosk: false,
@@ -56,6 +63,7 @@ export function Providers({ children }: { children: ReactNode }) {
         localStorage.getItem("home-preferences") || "{}",
       );
       saved = {
+        ...parseTabletPreferences(value),
         mode: value.mode === "live" ? "live" : "demo",
         theme: value.theme === "light" ? "light" : "dark",
         unit: value.unit === "fahrenheit" ? "fahrenheit" : "celsius",
@@ -122,14 +130,44 @@ export function usePreferences() {
 export function useHome(range: HistoryRange = "24h") {
   const { preferences, ready } = usePreferences();
   const client = useQueryClient();
+  const online = useConnectivity();
+  const now = useClock(10000);
+  const stampKey = ["last-update", preferences.mode, preferences.endpoint];
+  const stamp = useQuery({
+    queryKey: stampKey,
+    queryFn: () => {
+      try {
+        return localStorage.getItem(
+          `home-last-update:${preferences.mode}:${preferences.endpoint}`,
+        );
+      } catch {
+        return null;
+      }
+    },
+    staleTime: Infinity,
+    enabled: ready,
+  });
   const query = useQuery({
     queryKey: ["home", preferences.mode, preferences.endpoint, range],
-    queryFn: ({ signal }) =>
-      preferences.mode === "demo"
+    queryFn: async ({ signal }) => {
+      const result = await (preferences.mode === "demo"
         ? Promise.resolve(demoSnapshot(range))
-        : getLiveSnapshot(preferences.endpoint, signal),
+        : getLiveSnapshot(preferences.endpoint, signal));
+      if (result.device.lastUpdate) {
+        client.setQueryData(stampKey, result.device.lastUpdate);
+        try {
+          localStorage.setItem(
+            `home-last-update:${preferences.mode}:${preferences.endpoint}`,
+            result.device.lastUpdate,
+          );
+        } catch {}
+      }
+      return result;
+    },
     enabled: ready,
     refetchInterval: preferences.refresh * 1000,
+    refetchOnReconnect: "always",
+    refetchOnMount: "always",
   });
   useEffect(
     () =>
@@ -138,9 +176,19 @@ export function useHome(range: HistoryRange = "24h") {
       }),
     [client],
   );
+  const stale =
+    preferences.mode === "live" &&
+    !!query.data &&
+    !isMeasurementFresh(query.data.device.lastUpdate, now.getTime());
   return {
     ...query,
-    data: query.isError ? emptySnapshot() : query.data || emptySnapshot(),
+    data:
+      query.isError || stale || (!online && preferences.mode === "live")
+        ? emptySnapshot()
+        : query.data || emptySnapshot(),
+    lastSuccessfulUpdate: query.data?.device.lastUpdate || stamp.data || null,
+    online,
+    stale,
     mode: preferences.mode,
   };
 }

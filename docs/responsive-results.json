@@ -1,0 +1,448 @@
+[
+  {
+    "overflowCards": [],
+    "overlaps": 0,
+    "page": [
+      1024,
+      600
+    ],
+    "targets": [
+      {
+        "name": "Otevřít nastavení",
+        "rect": {
+          "bottom": 69.5,
+          "height": 52,
+          "left": 952,
+          "right": 1004,
+          "top": 17.5,
+          "width": 52,
+          "x": 952,
+          "y": 17.5
+        }
+      },
+      {
+        "name": "Zapnout kuchyňské světlo",
+        "rect": {
+          "bottom": 281,
+          "height": 52,
+          "left": 942,
+          "right": 994,
+          "top": 229,
+          "width": 52,
+          "x": 942,
+          "y": 229
+        }
+      },
+      {
+        "name": "Podrobnosti energie",
+        "rect": {
+          "bottom": 357,
+          "height": 52,
+          "left": 952,
+          "right": 1004,
+          "top": 305,
+          "width": 52,
+          "x": 952,
+          "y": 305
+        }
+      },
+      {
+        "name": "Přehled",
+        "rect": {
+          "bottom": 583.5,
+          "height": 52,
+          "left": 16,
+          "right": 99.921875,
+          "top": 531.5,
+          "width": 83.921875,
+          "x": 16,
+          "y": 531.5
+        }
+      },
+      {
+        "name": "Domácnost",
+        "rect": {
+          "bottom": 583.5,
+          "height": 52,
+          "left": 103.921875,
+          "right": 205.5625,
+          "top": 531.5,
+          "width": 101.640625,
+          "x": 103.921875,
+          "y": 531.5
+        }
+      },
+      {
+        "name": "Počasí",
+        "rect": {
+          "bottom": 583.5,
+          "height": 52,
+          "left": 209.5625,
+          "right": 289.203125,
+          "top": 531.5,
+          "width": 79.640625,
+          "x": 209.5625,
+          "y": 531.5
+        }
+      },
+      {
+        "name": "Energie",
+        "rect": {
+          "bottom": 583.5,
+          "height": 52,
+          "left": 293.203125,
+          "right": 377.125,
+          "top": 531.5,
+          "width": 83.921875,
+          "x": 293.203125,
+          "y": 531.5
+        }
+      },
+      {
+        "name": "Historie",
+        "rect": {
+          "bottom": 583.5,
+          "height": 52,
+          "left": 381.125,
+          "right": 464.421875,
+          "top": 531.5,
+          "width": 83.296875,
+          "x": 381.125,
+          "y": 531.5
+        }
+      },
+      {
+        "name": "Nastavení",
+        "rect": {
+          "bottom": 583.5,
+          "height": 52,
+          "left": 468.421875,
+          "right": 563.953125,
+          "top": 531.5,
+          "width": 95.53125,
+          "x": 468.421875,
+          "y": 531.5
+        }
+      }
+    ],
+    "viewport": [
+      1024,
+      600
+    ]
+  },
+  {
+    "overflowCards": [],
+    "overlaps": 0,
+    "page": [
+      1280,
+      800
+    ],
+    "targets": [
+      {
+        "name": "Otevřít nastavení",
+        "rect": {
+          "bottom": 71.5,
+          "height": 52,
+          "left": 1208,
+          "right": 1260,
+          "top": 19.5,
+          "width": 52,
+          "x": 1208,
+          "y": 19.5
+        }
+      },
+      {
+        "name": "Zapnout kuchyňské světlo",
+        "rect": {
+          "bottom": 247.5,
+          "height": 52,
+          "left": 1190.984375,
+          "right": 1242.984375,
+          "top": 195.5,
+          "width": 52,
+          "x": 1190.984375,
+          "y": 195.5
+        }
+      },
+      {
+        "name": "Podrobnosti energie",
+        "rect": {
+          "bottom": 470,
+          "height": 52,
+          "left": 1200.984375,
+          "right": 1252.984375,
+          "top": 418,
+          "width": 52,
+          "x": 1200.984375,
+          "y": 418
+        }
+      },
+      {
+        "name": "Přehled",
+        "rect": {
+          "bottom": 783.5,
+          "height": 52,
+          "left": 16,
+          "right": 115.375,
+          "top": 731.5,
+          "width": 99.375,
+          "x": 16,
+          "y": 731.5
+        }
+      },
+      {
+        "name": "Domácnost",
+        "rect": {
+          "bottom": 783.5,
+          "height": 52,
+          "left": 119.375,
+          "right": 238.078125,
+          "top": 731.5,
+          "width": 118.703125,
+          "x": 119.375,
+          "y": 731.5
+        }
+      },
+      {
+        "name": "Počasí",
+        "rect": {
+          "bottom": 783.5,
+          "height": 52,
+          "left": 242.078125,
+          "right": 336.765625,
+          "top": 731.5,
+          "width": 94.6875,
+          "x": 242.078125,
+          "y": 731.5
+        }
+      },
+      {
+        "name": "Energie",
+        "rect": {
+          "bottom": 783.5,
+          "height": 52,
+          "left": 340.765625,
+          "right": 440.140625,
+          "top": 731.5,
+          "width": 99.375,
+          "x": 340.765625,
+          "y": 731.5
+        }
+      },
+      {
+        "name": "Historie",
+        "rect": {
+          "bottom": 783.5,
+          "height": 52,
+          "left": 444.140625,
+          "right": 542.828125,
+          "top": 731.5,
+          "width": 98.6875,
+          "x": 444.140625,
+          "y": 731.5
+        }
+      },
+      {
+        "name": "Nastavení",
+        "rect": {
+          "bottom": 783.5,
+          "height": 52,
+          "left": 546.828125,
+          "right": 658.859375,
+          "top": 731.5,
+          "width": 112.03125,
+          "x": 546.828125,
+          "y": 731.5
+        }
+      }
+    ],
+    "viewport": [
+      1280,
+      800
+    ]
+  },
+  {
+    "overflowCards": [],
+    "overlaps": 0,
+    "page": [
+      1920,
+      1200
+    ],
+    "targets": [
+      {
+        "name": "Otevřít nastavení",
+        "rect": {
+          "bottom": 80.5,
+          "height": 52,
+          "left": 1848,
+          "right": 1900,
+          "top": 28.5,
+          "width": 52,
+          "x": 1848,
+          "y": 28.5
+        }
+      },
+      {
+        "name": "Zapnout kuchyňské světlo",
+        "rect": {
+          "bottom": 363,
+          "height": 52,
+          "left": 1823,
+          "right": 1875,
+          "top": 311,
+          "width": 52,
+          "x": 1823,
+          "y": 311
+        }
+      },
+      {
+        "name": "Podrobnosti energie",
+        "rect": {
+          "bottom": 687,
+          "height": 52,
+          "left": 1833,
+          "right": 1885,
+          "top": 635,
+          "width": 52,
+          "x": 1833,
+          "y": 635
+        }
+      },
+      {
+        "name": "Přehled",
+        "rect": {
+          "bottom": 1177.5,
+          "height": 52,
+          "left": 16,
+          "right": 139.703125,
+          "top": 1125.5,
+          "width": 123.703125,
+          "x": 16,
+          "y": 1125.5
+        }
+      },
+      {
+        "name": "Domácnost",
+        "rect": {
+          "bottom": 1177.5,
+          "height": 52,
+          "left": 143.703125,
+          "right": 291.578125,
+          "top": 1125.5,
+          "width": 147.875,
+          "x": 143.703125,
+          "y": 1125.5
+        }
+      },
+      {
+        "name": "Počasí",
+        "rect": {
+          "bottom": 1177.5,
+          "height": 52,
+          "left": 295.578125,
+          "right": 413.4375,
+          "top": 1125.5,
+          "width": 117.859375,
+          "x": 295.578125,
+          "y": 1125.5
+        }
+      },
+      {
+        "name": "Energie",
+        "rect": {
+          "bottom": 1177.5,
+          "height": 52,
+          "left": 417.4375,
+          "right": 541.140625,
+          "top": 1125.5,
+          "width": 123.703125,
+          "x": 417.4375,
+          "y": 1125.5
+        }
+      },
+      {
+        "name": "Historie",
+        "rect": {
+          "bottom": 1177.5,
+          "height": 52,
+          "left": 545.140625,
+          "right": 668,
+          "top": 1125.5,
+          "width": 122.859375,
+          "x": 545.140625,
+          "y": 1125.5
+        }
+      },
+      {
+        "name": "Nastavení",
+        "rect": {
+          "bottom": 1177.5,
+          "height": 52,
+          "left": 672,
+          "right": 811.546875,
+          "top": 1125.5,
+          "width": 139.546875,
+          "x": 672,
+          "y": 1125.5
+        }
+      }
+    ],
+    "viewport": [
+      1920,
+      1200
+    ]
+  },
+  {
+    "overflowCards": [],
+    "overlaps": 0,
+    "page": [
+      785,
+      1312
+    ],
+    "targets": [
+      {
+        "name": "Otevřít nastavení",
+        "rect": {
+          "bottom": 69.5,
+          "height": 52,
+          "left": 710,
+          "right": 762,
+          "top": 17.5,
+          "width": 52,
+          "x": 710,
+          "y": 17.5
+        }
+      },
+      {
+        "name": "Zapnout kuchyňské světlo",
+        "rect": {
+          "bottom": 249.5,
+          "height": 52,
+          "left": 689,
+          "right": 741,
+          "top": 197.5,
+          "width": 52,
+          "x": 689,
+          "y": 197.5
+        }
+      },
+      {
+        "name": "Podrobnosti energie",
+        "rect": {
+          "bottom": 460,
+          "height": 52,
+          "left": 699,
+          "right": 751,
+          "top": 408,
+          "width": 52,
+          "x": 699,
+          "y": 408
+        }
+      }
+    ],
+    "viewport": [
+      800,
+      1280
+    ]
+  }
+]

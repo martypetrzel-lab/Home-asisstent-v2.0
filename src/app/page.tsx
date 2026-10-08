@@ -1,4 +1,4 @@
-import { Overview } from "@/components/dashboard/cards";
+import { TabletDashboard } from "@/components/dashboard/tablet-dashboard";
 export default function Page() {
-  return <Overview />;
+  return <TabletDashboard />;
 }

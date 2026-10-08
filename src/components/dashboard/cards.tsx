@@ -18,7 +18,6 @@ import {
   Sun,
   Sunrise,
   Sunset,
-  Thermometer,
   Trees,
   Wind,
   Wifi,
@@ -33,7 +32,6 @@ import {
 } from "@/hooks/use-home";
 import type { HomeSnapshot } from "@/types";
 import { number, time } from "@/lib/utils";
-import { HistoryChart } from "@/components/charts/history-chart";
 import { setDemoTimer } from "@/services/data";
 export function Card({
   children,
@@ -580,68 +578,5 @@ export function EnergyFlowDiagram() {
         </span>
       </p>
     </Card>
-  );
-}
-export function Overview() {
-  const { data, mode } = useHome();
-  return (
-    <>
-      <div className="section-intro">
-        <div>
-          <span className="eyebrow">VÁŠ DOMOV, NA JEDNOM MÍSTĚ</span>
-          <h1>
-            Všechno pod kontrolou<span className="title-dot">.</span>
-          </h1>
-          <p>Příjemné klima. Chytré osvětlení. Energie v přehledu.</p>
-        </div>
-        <div className="overview-status">
-          <span className="status-dot" />
-          {mode === "demo" ? "Ukázka chytré domácnosti" : "Přehled domácnosti"}
-        </div>
-      </div>
-      <div className="overview-grid">
-        <ClimateCard data={data} />
-        <ClimateCard data={data} outdoor />
-        <WeatherCard data={data} />
-        <LightingControl />
-        <SolarCard data={data} />
-        <Card className="history-preview">
-          <CardHeading
-            icon={<Thermometer size={19} />}
-            title="Teplota během dne"
-            detail={
-              <Link href="/historie" className="text-link">
-                Historie <ArrowUpRight size={15} />
-              </Link>
-            }
-          />
-          <div className="chart-legend">
-            <span>
-              <i />
-              Uvnitř
-            </span>
-            <span>
-              <i />
-              Venku
-            </span>
-            <small>
-              Posledních 24 hodin{mode === "demo" ? " · simulace" : ""}
-            </small>
-          </div>
-          <HistoryChart data={data.history} compact />
-        </Card>
-        <DeviceCard data={data} />
-      </div>
-      <div className="dashboard-footer">
-        <span>
-          <House size={14} /> Home Assistant ESP32{" "}
-          <span className="muted">/</span> Váš domov v rovnováze
-        </span>
-        <span>
-          Fáze 1 <span className="muted">·</span> Rozhraní připravené pro
-          budoucí integraci
-        </span>
-      </div>
-    </>
   );
 }

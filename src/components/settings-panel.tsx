@@ -14,7 +14,7 @@ import { Card, CardHeading } from "@/components/dashboard/cards";
 import { PageIntro } from "@/components/pages";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { KioskModeToggle } from "@/components/app-shell";
+import { TabletSettings } from "@/components/tablet/tablet-settings";
 import { validateEndpoint } from "@/services/data";
 function Toggle({
   checked,
@@ -73,6 +73,7 @@ export function SettingsPanel() {
         description="Přizpůsobte si domov, displej a připojení zařízení."
       />
       <div className="settings-grid">
+        <TabletSettings />
         <Card>
           <CardHeading icon={<Monitor size={19} />} title="Displej a vzhled" />
           <Toggle
@@ -80,25 +81,6 @@ export function SettingsPanel() {
             description="Přepínejte mezi tmavým a světlým rozhraním."
             checked={preferences.theme === "light"}
             onChange={(value) => update({ theme: value ? "light" : "dark" })}
-          />
-          <div className="setting-row">
-            <div>
-              <strong>Režim tabletu</strong>
-              <p>Klidnější rozhraní s ovládáním na celé obrazovce.</p>
-            </div>
-            <KioskModeToggle />
-          </div>
-          <Toggle
-            label="Ztlumení rozhraní"
-            description="Ztlumí obsah v režimu tabletu, nemění systémový jas."
-            checked={preferences.dim}
-            onChange={(dim) => update({ dim })}
-          />
-          <Toggle
-            label="Šetřič obrazovky"
-            description="Po dvou minutách nečinnosti v režimu tabletu."
-            checked={preferences.screensaver}
-            onChange={(screensaver) => update({ screensaver })}
           />
           <label className="field-label">
             Jednotky teploty
@@ -246,7 +228,7 @@ export function SettingsPanel() {
           </div>
           <div className="metric-row">
             <span>Verze aplikace</span>
-            <strong>2.0.0 · Fáze 1</strong>
+            <strong>2.1.0 · Tablet</strong>
           </div>
         </Card>
       </div>

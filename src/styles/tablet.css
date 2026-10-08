@@ -1,0 +1,1249 @@
+/* The enclosure margin is inside the actual CSS viewport, plus OS safe areas. */
+.night-mode {
+  --bg: #111313;
+  --sidebar: #151717;
+  --surface: #1b1e1e;
+  --surface-raised: #222525;
+  --border: #2b2f2e;
+  --text: #f0f0eb;
+  --muted: #929994;
+  --amber: #e8b66a;
+  --amber-bg: #302a20;
+  --green: #96b5a2;
+  --teal: #7caaa4;
+  --error: #e6a19a;
+  background: var(--bg);
+  color: var(--text);
+  color-scheme: dark;
+}
+.header-right > .icon-button {
+  min-width: var(--touch-size);
+  min-height: var(--touch-size);
+}
+.wall-sensor-dot.unavailable {
+  background: var(--muted);
+}
+.app-shell {
+  --bezel: 16px;
+  --ui-scale: 1;
+  --touch-size: 52px;
+}
+.dashboard-header {
+  gap: 20px;
+}
+.breadcrumb > svg {
+  color: var(--amber);
+}
+.breadcrumb strong {
+  font-size: 19px;
+  letter-spacing: -0.8px;
+}
+.breadcrumb strong span {
+  color: var(--muted);
+  font-weight: 400;
+}
+.breadcrumb small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.header-clock {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+.header-clock > strong {
+  font-size: 40px;
+  font-weight: 400;
+  letter-spacing: -1px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.header-clock > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.panel-footer {
+  display: none;
+}
+.manual-dim .workspace {
+  filter: brightness(0.65);
+}
+.night-mode .workspace {
+  filter: brightness(0.6);
+}
+.manual-dim.night-mode .workspace {
+  filter: brightness(0.45);
+}
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.tablet-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-areas: "climate weather controls";
+  gap: 16px;
+  min-width: 0;
+}
+.tablet-dashboard .card {
+  padding: 20px;
+  margin: 0;
+  min-width: 0;
+}
+.tablet-dashboard .card-heading {
+  margin-bottom: 12px;
+  min-height: 24px;
+}
+.tablet-dashboard h2 {
+  font-size: calc(15px * var(--ui-scale));
+  font-weight: 500;
+}
+.wall-climate {
+  grid-area: climate;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  min-height: 0;
+}
+.wall-climate-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wall-sensor-dot {
+  height: 6px;
+  width: 6px;
+  background: var(--green);
+  border-radius: 50%;
+}
+.wall-temperature {
+  font-size: clamp(46px, 4.4vw, 78px);
+  line-height: 1.1;
+  letter-spacing: -2px;
+}
+.wall-temperature > span {
+  font-size: 0.43em;
+  vertical-align: top;
+  display: inline-block;
+  margin: 7px 0 0 7px;
+  color: var(--muted);
+  letter-spacing: -1px;
+}
+.wall-temperature.missing,
+.wall-energy-main .missing {
+  font-size: calc(21px * var(--ui-scale));
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.wall-humidity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: calc(13px * var(--ui-scale));
+}
+.wall-humidity svg,
+.wall-humidity > span {
+  color: var(--muted);
+}
+.wall-humidity strong {
+  font-weight: 500;
+  font-size: calc(17px * var(--ui-scale));
+}
+.wall-climate-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  color: var(--muted);
+  font-size: calc(11px * var(--ui-scale));
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.wall-climate-caption > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--green);
+}
+.wall-tiny-dot {
+  height: 4px;
+  width: 4px;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--green);
+}
+.wall-weather {
+  grid-area: weather;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 0;
+}
+.wall-location {
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--muted);
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wall-weather-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.wall-weather-temperature {
+  font-size: calc(49px * var(--ui-scale));
+  line-height: 1.1;
+  letter-spacing: -2px;
+  white-space: nowrap;
+}
+.wall-weather-now p {
+  font-size: calc(13px * var(--ui-scale));
+  margin-top: 9px;
+}
+.wall-weather-now p span {
+  color: var(--muted);
+  font-size: calc(11px * var(--ui-scale));
+}
+.wall-weather-icon,
+.wall-daily svg,
+.wall-sun svg {
+  color: var(--amber);
+}
+.wall-weather-metrics {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+.wall-weather-metrics > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.wall-weather-metrics small {
+  font-size: 11px;
+}
+.wall-label {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-bottom: 13px;
+}
+.wall-forecast,
+.wall-hourly {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.wall-daily {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+.wall-daily > div {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+.wall-daily span,
+.wall-daily small {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+}
+.wall-daily strong {
+  font-size: calc(15px * var(--ui-scale));
+  font-weight: 500;
+  white-space: nowrap;
+}
+.wall-daily small {
+  margin-top: -6px;
+}
+.wall-hourly > div:last-child {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.wall-hourly > div > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+}
+.wall-hourly span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.wall-hourly strong {
+  font-size: calc(14px * var(--ui-scale));
+  font-weight: 400;
+  white-space: nowrap;
+}
+.wall-hourly small {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.wall-sun {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.wall-sun > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.wall-sun > span > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.wall-sun strong {
+  font-size: calc(14px * var(--ui-scale));
+  font-weight: 400;
+  display: block;
+  color: var(--text);
+  margin-top: 3px;
+}
+.wall-weather-source {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.wall-weather-empty {
+  margin: auto;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 13px;
+}
+.wall-weather-empty small {
+  font-size: 11px;
+}
+.wall-weather-empty svg {
+  color: var(--amber);
+}
+.wall-controls {
+  grid-area: controls;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  min-height: 0;
+}
+.wall-controls .lighting-card {
+  justify-content: space-between;
+}
+.wall-controls .lighting-body {
+  margin: 0;
+  gap: 12px;
+}
+.wall-controls .lighting-body h3 {
+  font-size: calc(13px * var(--ui-scale));
+  line-height: 1.5;
+}
+.wall-controls .lighting-body p {
+  font-size: 10px;
+  margin: 4px 0 8px;
+}
+.wall-controls .lighting-body > div > span {
+  font-size: calc(12px * var(--ui-scale));
+  line-height: 1.5;
+}
+.wall-controls .bulb-orbit {
+  width: 46px;
+  height: 56px;
+}
+.wall-controls .power-button {
+  width: var(--touch-size);
+  height: var(--touch-size);
+  min-width: var(--touch-size);
+}
+.wall-controls .lighting-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+}
+.wall-controls .lighting-footer label {
+  font-size: 11px;
+}
+.wall-controls .lighting-footer select {
+  font-size: 11px;
+  min-height: var(--touch-size);
+  max-width: 135px;
+}
+.wall-controls .lighting-footer small {
+  font-size: 10px;
+}
+.wall-energy {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wall-energy-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-size);
+  height: var(--touch-size);
+  margin: -14px -10px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.wall-energy-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wall-energy-main > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wall-energy-main > div > span {
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--muted);
+}
+.wall-energy-main > div:first-child > strong {
+  font-size: calc(37px * var(--ui-scale));
+  line-height: 1.1;
+  letter-spacing: -1px;
+  font-weight: 400;
+  color: var(--amber);
+}
+.wall-energy-main > div > strong small {
+  font-size: 19px;
+}
+.wall-energy-main > div:last-child {
+  align-items: flex-end;
+  gap: 4px;
+}
+.wall-energy-main > div:last-child svg {
+  color: var(--amber);
+}
+.wall-energy-main > div:last-child strong {
+  font-weight: 400;
+  font-size: calc(14px * var(--ui-scale));
+  white-space: nowrap;
+}
+.wall-battery {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  color: var(--muted);
+}
+.wall-battery > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.wall-battery span {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.wall-battery strong {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 400;
+  color: var(--text);
+}
+.wall-battery > small {
+  font-size: 10px;
+  margin-left: auto;
+  text-align: right;
+}
+.wall-source {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--green);
+}
+.wall-source > svg {
+  display: none;
+}
+.wall-source .source-tag {
+  font-size: calc(12px * var(--ui-scale));
+}
+.idle-dim-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.75);
+}
+.idle-dim-overlay > button {
+  border: 0;
+  background: none;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: calc(var(--bezel) + env(safe-area-inset-bottom) + 28px);
+  color: #b7bdb7;
+}
+.idle-dim-overlay small {
+  font-size: 14px;
+}
+.clock-screensaver > button {
+  width: 100%;
+  height: 100%;
+  color: #bbc0ba;
+  justify-content: center;
+  animation: none;
+}
+.clock-screensaver > button > * {
+  animation: drift 50s ease-in-out infinite alternate;
+}
+.clock-screensaver strong {
+  font-size: clamp(60px, 9vw, 120px);
+  font-variant-numeric: tabular-nums;
+}
+.clock-screensaver small {
+  font-size: 12px;
+  color: #939993;
+  margin-top: 20px;
+}
+.pwa-error {
+  position: fixed;
+  bottom: calc(var(--bezel) + 80px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 65;
+  max-width: 85%;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  font-size: 12px;
+}
+.tablet-settings {
+  grid-column: 1/-1;
+}
+.tablet-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 28px;
+}
+.tablet-fields .field-label {
+  margin: 14px 0;
+}
+.tablet-fields input[type="range"] {
+  padding: 10px 0;
+  accent-color: var(--amber);
+}
+.tablet-settings .setting-row {
+  min-height: var(--touch-size);
+}
+.tablet-settings .switch {
+  min-height: 48px;
+  min-width: 48px;
+}
+.tablet-settings .switch i {
+  top: 14px;
+}
+.tablet-settings .button,
+.tablet-settings select {
+  min-height: var(--touch-size);
+}
+.tablet-settings .fullscreen-control {
+  margin-top: 16px;
+}
+.tablet-settings output {
+  float: right;
+  color: var(--text);
+}
+@media (min-width: 960px) and (orientation: landscape) {
+  .overview-route,
+  .kiosk {
+    height: 100dvh;
+    min-height: 0;
+    padding: calc(var(--bezel) + env(safe-area-inset-top))
+      calc(var(--bezel) + env(safe-area-inset-right))
+      calc(var(--bezel) + env(safe-area-inset-bottom))
+      calc(var(--bezel) + env(safe-area-inset-left));
+  }
+  .overview-route .sidebar,
+  .kiosk .sidebar {
+    display: none;
+  }
+  .overview-route .workspace,
+  .kiosk .workspace {
+    margin: 0;
+    height: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 72px minmax(0, 1fr) 64px;
+    gap: 12px;
+    padding: 0;
+  }
+  .overview-route .dashboard-header,
+  .kiosk .dashboard-header {
+    height: auto;
+    padding: 0 4px 12px;
+    min-width: 0;
+  }
+  .overview-route main,
+  .kiosk main {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .kiosk:not(.overview-route) main {
+    display: block;
+    overflow-y: auto;
+    padding: 12px 8px;
+    scrollbar-gutter: stable;
+  }
+  .overview-route .tablet-dashboard {
+    height: 100%;
+    flex: 1;
+    min-height: 0;
+    gap: 14px;
+  }
+  .overview-route .wall-climate,
+  .overview-route .wall-controls {
+    gap: 14px;
+  }
+  .overview-route .error-banner {
+    margin: 0;
+    flex-shrink: 0;
+    max-height: 82px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+  .overview-route .error-banner p {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .overview-route .error-banner .button {
+    min-height: 48px;
+  }
+  .overview-route .loading-bar {
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .overview-route .panel-footer,
+  .kiosk .panel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    min-width: 0;
+  }
+  .panel-footer nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+  .panel-footer .nav-item {
+    min-width: var(--touch-size);
+    min-height: var(--touch-size);
+    height: var(--touch-size);
+    padding: 0 15px;
+    gap: 8px;
+    font-size: calc(12px * var(--ui-scale));
+    border-radius: 8px;
+  }
+  .panel-footer .nav-selected-dot {
+    display: none;
+  }
+  .panel-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--green);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .panel-status small {
+    color: var(--muted);
+    font-size: 10px;
+    margin-left: 8px;
+  }
+  .panel-footer .kiosk-toggle {
+    width: var(--touch-size);
+    height: var(--touch-size);
+    min-height: var(--touch-size);
+    flex-shrink: 0;
+  }
+  .panel-footer .kiosk-toggle span {
+    display: none;
+  }
+  .flipped .tablet-dashboard {
+    grid-template-areas: "controls weather climate";
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 0.94fr);
+  }
+  .overview-route .header-clock {
+    margin-left: 0;
+  }
+  .overview-route .header-right {
+    margin-left: auto;
+  }
+  .overview-route .header-connection {
+    display: flex;
+  }
+  .overview-route .header-right > .icon-button {
+    width: var(--touch-size);
+    height: var(--touch-size);
+  }
+  .overview-route main:has(.error-banner) .wall-climate-caption,
+  .overview-route main:has(.error-banner) .lighting-footer {
+    display: none;
+  }
+  .overview-route main:has(.error-banner) .wall-energy-main > div:last-child {
+    display: none;
+  }
+}
+@media (min-width: 960px) and (orientation: landscape) and (max-height: 700px) {
+  .overview-route .workspace,
+  .kiosk .workspace {
+    grid-template-rows: calc(var(--touch-size) + 12px) minmax(0, 1fr) calc(
+        var(--touch-size) + 12px
+      );
+    gap: 8px;
+  }
+  .overview-route .dashboard-header,
+  .kiosk .dashboard-header {
+    padding-bottom: 8px;
+    gap: 12px;
+  }
+  .header-clock {
+    gap: 12px;
+  }
+  .header-clock > strong {
+    font-size: 38px;
+  }
+  .header-clock > span {
+    font-size: 11px;
+  }
+  .header-connection .connection {
+    font-size: 10px;
+  }
+  .header-connection small {
+    font-size: 9px;
+  }
+  .overview-route .tablet-dashboard,
+  .overview-route .wall-controls,
+  .overview-route .wall-climate {
+    gap: 10px;
+  }
+  .tablet-dashboard .card {
+    padding: 13px;
+  }
+  .tablet-dashboard .card-heading {
+    margin-bottom: 5px;
+  }
+  .tablet-dashboard h2 {
+    font-size: calc(13px * var(--ui-scale));
+  }
+  .wall-climate-card {
+    gap: 6px;
+  }
+  .wall-temperature {
+    font-size: calc(44px * var(--ui-scale));
+  }
+  .wall-humidity strong {
+    font-size: calc(15px * var(--ui-scale));
+  }
+  .wall-climate-caption {
+    gap: 5px;
+    padding-top: 8px;
+    font-size: 10px;
+  }
+  .wall-weather {
+    gap: 8px;
+  }
+  .wall-weather-temperature {
+    font-size: calc(36px * var(--ui-scale));
+  }
+  .wall-weather-icon {
+    width: 53px;
+    height: 53px;
+  }
+  .wall-weather-now p {
+    margin-top: 5px;
+    font-size: 11px;
+  }
+  .wall-weather-now p span {
+    font-size: 10px;
+  }
+  .wall-weather-metrics {
+    gap: 18px;
+    font-size: 11px;
+  }
+  .wall-forecast,
+  .wall-hourly {
+    padding-top: 8px;
+  }
+  .wall-label {
+    font-size: 9px;
+    margin-bottom: 7px;
+  }
+  .wall-daily > div {
+    gap: 6px;
+  }
+  .wall-daily > div > small {
+    display: none;
+  }
+  .wall-daily strong {
+    font-size: calc(13px * var(--ui-scale));
+  }
+  .wall-daily svg {
+    width: 19px;
+    height: 19px;
+  }
+  .wall-daily span {
+    font-size: 11px;
+  }
+  .wall-hourly > div > div {
+    gap: 4px;
+  }
+  .wall-hourly strong {
+    font-size: calc(12px * var(--ui-scale));
+  }
+  .wall-hourly span {
+    font-size: 10px;
+  }
+  .wall-sun {
+    padding-top: 8px;
+  }
+  .wall-sun strong {
+    font-size: 12px;
+  }
+  .wall-sun > span > span {
+    font-size: 9px;
+  }
+  .wall-weather-source {
+    font-size: 9px;
+  }
+  .wall-controls .lighting-body {
+    gap: 8px;
+  }
+  .wall-controls .lighting-body h3 {
+    font-size: calc(12px * var(--ui-scale));
+  }
+  .wall-controls .lighting-body p {
+    display: none;
+  }
+  .wall-controls .lighting-body > div > span {
+    margin-top: 6px;
+    font-size: 11px;
+  }
+  .wall-controls .bulb-orbit {
+    width: 38px;
+    height: 48px;
+  }
+  .wall-controls .lighting-footer {
+    display: none;
+  }
+  .wall-energy {
+    gap: 8px;
+  }
+  .wall-energy-main > div:first-child > strong {
+    font-size: calc(29px * var(--ui-scale));
+  }
+  .wall-energy-main > div:last-child strong {
+    font-size: 12px;
+  }
+  .wall-energy-main > div > span {
+    font-size: 10px;
+  }
+  .wall-battery {
+    padding-top: 8px;
+    gap: 7px;
+  }
+  .wall-battery strong {
+    font-size: 11px;
+  }
+  .wall-battery > small {
+    font-size: 9px;
+    max-width: 60px;
+  }
+  .wall-battery span {
+    font-size: 9px;
+  }
+  .wall-source {
+    padding-top: 8px;
+  }
+  .wall-source .source-tag {
+    font-size: 11px;
+  }
+  .panel-footer .nav-item {
+    padding: 0 10px;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .panel-status {
+    font-size: 10px;
+  }
+  .panel-status small {
+    display: none;
+  }
+  .overview-route .error-banner {
+    max-height: 64px;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .overview-route .error-banner p {
+    font-size: 10px;
+  }
+  .overview-route main:has(.error-banner) .wall-energy {
+    gap: 5px;
+  }
+  .overview-route
+    main:has(.error-banner)
+    .wall-energy-main
+    > div:first-child
+    > strong {
+    font-size: 20px;
+  }
+}
+@media (min-width: 1600px) and (orientation: landscape) {
+  .overview-route .workspace {
+    grid-template-rows: 90px minmax(0, 1fr) 76px;
+    gap: 20px;
+  }
+  .tablet-dashboard .card {
+    padding: 28px;
+  }
+  .tablet-dashboard .wall-climate,
+  .tablet-dashboard .wall-controls {
+    gap: 20px;
+  }
+  .tablet-dashboard h2 {
+    font-size: calc(20px * var(--ui-scale));
+  }
+  .wall-temperature {
+    font-size: calc(88px * var(--ui-scale));
+  }
+  .wall-weather-temperature {
+    font-size: calc(70px * var(--ui-scale));
+  }
+  .wall-weather-icon {
+    width: 100px;
+    height: 100px;
+  }
+  .wall-weather-now p {
+    font-size: 17px;
+  }
+  .wall-weather-metrics {
+    font-size: 17px;
+  }
+  .wall-daily strong {
+    font-size: 20px;
+  }
+  .wall-daily span {
+    font-size: 15px;
+  }
+  .wall-hourly strong {
+    font-size: 19px;
+  }
+  .wall-hourly span {
+    font-size: 14px;
+  }
+  .wall-humidity strong {
+    font-size: 23px;
+  }
+  .wall-humidity {
+    font-size: 17px;
+  }
+  .wall-climate-caption {
+    font-size: 14px;
+  }
+  .wall-controls .lighting-body h3 {
+    font-size: 18px;
+  }
+  .wall-controls .lighting-body > div > span {
+    font-size: 15px;
+  }
+  .wall-controls .bulb-orbit {
+    width: 65px;
+    height: 75px;
+  }
+  .wall-energy-main > div:first-child > strong {
+    font-size: 55px;
+  }
+  .wall-energy-main > div > span {
+    font-size: 15px;
+  }
+  .wall-battery strong {
+    font-size: 17px;
+  }
+  .header-clock > strong {
+    font-size: 56px;
+  }
+  .panel-footer .nav-item {
+    font-size: 15px;
+    padding: 0 22px;
+  }
+}
+@media (max-width: 959px), (orientation: portrait) {
+  .tablet-dashboard {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "climate controls" "weather weather";
+  }
+  .wall-climate,
+  .wall-controls {
+    gap: 16px;
+  }
+  .wall-weather {
+    min-height: 560px;
+  }
+  .header-clock > span {
+    display: none;
+  }
+  .header-clock {
+    margin-left: auto;
+  }
+  .header-clock > strong {
+    font-size: 30px;
+  }
+  .header-connection {
+    display: none;
+  }
+  .breadcrumb strong {
+    font-size: 15px;
+  }
+  .breadcrumb small {
+    font-size: 9px;
+  }
+  .tablet-fields {
+    grid-template-columns: 1fr;
+  }
+  .kiosk .panel-footer {
+    display: block;
+    position: fixed;
+    bottom: env(safe-area-inset-bottom);
+    left: 0;
+    right: 0;
+    padding: 8px max(var(--bezel), env(safe-area-inset-left));
+    background: var(--sidebar);
+    border-top: 1px solid var(--border);
+    z-index: 20;
+  }
+  .kiosk .panel-footer nav {
+    display: flex;
+    justify-content: space-between;
+  }
+  .kiosk .panel-footer .nav-item {
+    padding: 8px 5px;
+    font-size: 10px;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 48px;
+    min-height: 56px;
+  }
+  .kiosk .panel-status,
+  .kiosk .panel-footer > .kiosk-toggle {
+    display: none;
+  }
+  .kiosk .workspace {
+    padding-bottom: 84px;
+  }
+  .overview-route .workspace {
+    min-height: 100dvh;
+  }
+  .tablet-dashboard .lighting-footer label {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 700px) {
+  .dashboard-header {
+    padding: 0 max(var(--bezel), env(safe-area-inset-left));
+    gap: 8px;
+  }
+  .breadcrumb > svg {
+    display: none;
+  }
+  .breadcrumb strong {
+    font-size: 13px;
+  }
+  .breadcrumb small {
+    font-size: 8px;
+  }
+  .header-clock > strong {
+    font-size: 28px;
+  }
+  .header-right {
+    gap: 6px;
+  }
+  .header-right .mode-badge {
+    font-size: 7px;
+  }
+  .header-right .icon-button {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .tablet-dashboard {
+    grid-template-columns: 1fr;
+    grid-template-areas: "climate" "controls" "weather";
+  }
+  .wall-climate {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+  .wall-climate-card {
+    min-height: 220px;
+  }
+  .tablet-dashboard .wall-climate-card {
+    padding: 15px 12px;
+  }
+  .wall-climate-caption {
+    font-size: 9px;
+  }
+  .wall-humidity {
+    gap: 5px;
+    font-size: 10px;
+  }
+  .wall-humidity strong {
+    font-size: 14px;
+  }
+  .wall-temperature {
+    font-size: 44px;
+  }
+  .wall-temperature.missing {
+    font-size: 17px;
+  }
+  .tablet-dashboard h2 {
+    font-size: 12px;
+  }
+  .wall-climate .card-heading {
+    gap: 5px;
+  }
+  .wall-climate .icon-label {
+    gap: 5px;
+  }
+  .wall-climate .icon-label svg {
+    width: 15px;
+  }
+  .wall-controls {
+    grid-template-rows: auto auto;
+  }
+  .wall-controls .lighting-card {
+    min-height: 230px;
+  }
+  .wall-energy {
+    min-height: 240px;
+  }
+  .wall-weather {
+    min-height: 560px;
+  }
+  .wall-controls .lighting-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .wall-controls .lighting-footer label {
+    justify-content: space-between;
+  }
+  .wall-controls .lighting-footer small {
+    text-align: left;
+    max-width: none;
+  }
+  .wall-battery > small {
+    font-size: 10px;
+  }
+  .wall-weather-empty {
+    padding: 24px 0;
+  }
+  .overview-route main {
+    padding-left: max(var(--bezel), env(safe-area-inset-left));
+    padding-right: max(var(--bezel), env(safe-area-inset-right));
+  }
+}
+
+@media (min-width: 960px) and (orientation: landscape) {
+  .overview-route main {
+    container-type: size;
+    container-name: wall;
+  }
+  .wall-climate,
+  .wall-controls {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+}
+@container wall (max-height:410px) {
+  .wall-climate-caption {
+    display: none;
+  }
+  .wall-weather {
+    gap: 5px;
+  }
+  .wall-weather .card-heading {
+    margin-bottom: 0;
+  }
+  .wall-weather-temperature {
+    font-size: calc(30px * var(--ui-scale));
+  }
+  .wall-weather-now p {
+    margin-top: 3px;
+  }
+  .wall-weather-icon {
+    width: 42px;
+    height: 42px;
+  }
+  .wall-forecast,
+  .wall-hourly,
+  .wall-sun {
+    padding-top: 5px;
+  }
+  .wall-label {
+    margin-bottom: 4px;
+  }
+  .wall-daily > div {
+    gap: 3px;
+  }
+  .wall-hourly > div > div {
+    gap: 3px;
+  }
+  .wall-weather-source {
+    display: none;
+  }
+  .wall-energy {
+    gap: 4px !important;
+    padding: 10px !important;
+  }
+  .wall-energy .card-heading {
+    min-height: 20px;
+    margin-bottom: 0;
+  }
+  .wall-energy-main > div {
+    gap: 4px;
+  }
+  .wall-energy-main > div:first-child > strong {
+    font-size: 25px;
+  }
+  .wall-battery,
+  .wall-source {
+    padding-top: 5px;
+  }
+  .wall-battery > div {
+    gap: 3px;
+  }
+}
