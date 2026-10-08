@@ -32,7 +32,7 @@ import { HistoryChart } from "@/components/charts/history-chart";
 import { ForecastChart } from "@/components/weather/forecast-chart";
 import { useHome, usePreferences, useTemperature } from "@/hooks/use-home";
 import { number, time } from "@/lib/utils";
-import type { HistoryRange } from "@/types";
+import type { HomeSnapshot, HistoryRange } from "@/types";
 export function PageIntro({
   eyebrow,
   title,
@@ -77,6 +77,46 @@ export function RangeFilter({
     </div>
   );
 }
+function Events({
+  events,
+  error,
+}: {
+  events: HomeSnapshot["events"];
+  error?: Error | null;
+}) {
+  if (error)
+    return (
+      <p role="alert" className="note">
+        Historii se nepodařilo načíst: {error.message}
+      </p>
+    );
+  if (!events?.length)
+    return (
+      <p className="prose">
+        Zatím bez zaznamenaných událostí. Sledování zdrojů vyžaduje zapojený a
+        ověřený TPS2116.
+      </p>
+    );
+  return (
+    <div>
+      {events
+        .slice(-12)
+        .reverse()
+        .map((event, i) => (
+          <div className="metric-row" key={i}>
+            <span>{event.detail || event.kind}</span>
+            <small>
+              {event.timestamp
+                ? new Date(event.timestamp).toLocaleString("cs-CZ", {
+                    timeZone: "Europe/Prague",
+                  })
+                : `Po startu ${event.uptime} s · bez času`}
+            </small>
+          </div>
+        ))}
+    </div>
+  );
+}
 export function HouseholdPage() {
   const { data } = useHome();
   const temp = useTemperature();
@@ -85,12 +125,14 @@ export function HouseholdPage() {
     data.indoor.temperature !== null && data.outdoor.temperature !== null
       ? data.indoor.temperature - data.outdoor.temperature
       : null;
-  const minimum = data.history.length
-    ? Math.min(...data.history.map((d) => d.indoorTemperature))
-    : null;
-  const maximum = data.history.length
-    ? Math.max(...data.history.map((d) => d.indoorTemperature))
-    : null;
+  const indoorValues = data.history
+    .map((d) => d.indoorTemperature)
+    .filter((v): v is number => v !== null);
+  const outdoorValues = data.history
+    .map((d) => d.outdoorTemperature)
+    .filter((v): v is number => v !== null);
+  const minimum = indoorValues.length ? Math.min(...indoorValues) : null;
+  const maximum = indoorValues.length ? Math.max(...indoorValues) : null;
   return (
     <>
       <PageIntro
@@ -133,21 +175,13 @@ export function HouseholdPage() {
           <div className="metric-row">
             <span>Minimum venku · 24 h</span>
             <strong>
-              {temp(
-                data.history.length
-                  ? Math.min(...data.history.map((d) => d.outdoorTemperature))
-                  : null,
-              )}
+              {temp(outdoorValues.length ? Math.min(...outdoorValues) : null)}
             </strong>
           </div>
           <div className="metric-row">
             <span>Maximum venku · 24 h</span>
             <strong>
-              {temp(
-                data.history.length
-                  ? Math.max(...data.history.map((d) => d.outdoorTemperature))
-                  : null,
-              )}
+              {temp(outdoorValues.length ? Math.max(...outdoorValues) : null)}
             </strong>
           </div>
         </Card>
@@ -172,7 +206,7 @@ export function HouseholdPage() {
   );
 }
 export function WeatherPage() {
-  const { data, mode } = useHome();
+  const { data, mode, weatherError } = useHome();
   const { preferences } = usePreferences();
   const temp = useTemperature();
   return (
@@ -185,18 +219,38 @@ export function WeatherPage() {
       <div className="info-banner">
         <Info size={19} />
         {mode === "demo"
-          ? "Předpověď je simulovaná. Integrace Open-Meteo bude doplněna v další fázi."
-          : "Internetové počasí není připojeno. Venkovní DHT22 měří pouze teplotu a vlhkost."}
+          ? "Předpověď je simulovaná. V živém režimu ji dodává Open-Meteo."
+          : weatherError
+            ? "Předpověď se nepodařilo obnovit. Lokální měření a světlo fungují samostatně."
+            : "Open-Meteo: internetová předpověď. Venkovní DHT22 měří lokální teplotu a vlhkost."}
       </div>
       <div className="detail-grid">
         <WeatherCard data={data} />
+        <p className="note span-2">
+          Zdroj:{" "}
+          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+            Open-Meteo
+          </a>{" "}
+          · internetová modelová předpověď.{" "}
+          {data.weather.fetchedAt
+            ? `Obnoveno ${time(data.weather.fetchedAt)}. `
+            : ""}
+          {data.weather.stale
+            ? "Zobrazená předpověď je starší; obnova selhala."
+            : ""}{" "}
+          Keš se obnovuje po 10 minutách, při výpadku nejvýše hodinu.
+        </p>
         <Card className="span-2">
           <CardHeading
             icon={<CloudSun size={19} />}
             title="Hodinová předpověď"
             detail={
               <span className="sensor-tag">
-                {mode === "demo" ? "Simulace" : "Nepřipojeno"}
+                {mode === "demo"
+                  ? "Simulace"
+                  : data.weather.stale
+                    ? "Starší předpověď"
+                    : "Open-Meteo"}
               </span>
             }
           />
@@ -275,6 +329,14 @@ export function WeatherPage() {
             [Wind, "Vítr", data.weather.wind, "km/h"],
             [Wind, "Nárazy větru", data.weather.gusts, "km/h"],
             [Gauge, "Tlak", data.weather.pressure, "hPa"],
+            [
+              Droplets,
+              "Vlhkost podle předpovědi",
+              data.weather.humidity ?? null,
+              "%",
+            ],
+            [CloudSun, "Oblačnost", data.weather.cloudCover ?? null, "%"],
+            [Droplets, "Srážky", data.weather.precipitationMm ?? null, "mm"],
             [Sunrise, "Východ slunce", data.weather.sunrise, ""],
             [Sunset, "Západ slunce", data.weather.sunset, ""],
           ].map(([, label, value, unit]) => (
@@ -293,8 +355,8 @@ export function WeatherPage() {
           <CardHeading icon={<Info size={19} />} title="Dva nezávislé zdroje" />
           <p className="prose">
             Venkovní senzor DHT22 poskytuje lokální teplotu a vlhkost u vašeho
-            domu. Internetová předpověď bude pocházet z Open-Meteo pro zvolené
-            místo. Déšť, vítr ani tlak z DHT22 neodvozujeme.
+            domu. Internetovou předpověď poskytuje Open-Meteo pro zvolené místo.
+            Déšť, vítr ani tlak z DHT22 neodvozujeme.
           </p>
         </Card>
       </div>
@@ -303,7 +365,7 @@ export function WeatherPage() {
 }
 export function EnergyPage() {
   const [range, setRange] = useState<HistoryRange>("24h");
-  const { data, mode } = useHome(range);
+  const { data, mode, historyError } = useHome(range);
   return (
     <>
       <PageIntro
@@ -313,6 +375,46 @@ export function EnergyPage() {
       />
       <div className="detail-grid">
         <SolarCard data={data} />
+        {mode === "live" && (
+          <Card>
+            <CardHeading
+              icon={<Info size={19} />}
+              title="Místo solárního měření"
+            />
+            <p className="prose">
+              {data.solar.location || "Místo nebylo ověřeno."}
+            </p>
+            <p className="note">
+              {data.solar.directionConfirmed
+                ? "Směr měření je v konfiguraci potvrzen. Denní energie může být neúplná."
+                : "Směr proudu není potvrzen; denní Wh se nevypočítávají."}{" "}
+              Napětí INA není automaticky napětím panelu naprázdno.
+            </p>
+            {[
+              [
+                "Celkem od instalace · měřené úseky",
+                data.solar.totalEnergy,
+                "Wh",
+              ],
+              ["Min. výkon od restartu", data.solar.minimum, "W"],
+              ["Max. výkon od restartu", data.solar.maximum, "W"],
+              ["Surový proud INA", data.solar.rawCurrentMa, "mA"],
+            ].map(([label, value, unit]) => (
+              <div className="metric-row" key={String(label)}>
+                <span>{String(label)}</span>
+                <strong>
+                  {typeof value === "number"
+                    ? `${number(value, 2)} ${unit}`
+                    : "Nedostupné"}
+                </strong>
+              </div>
+            ))}
+            <p className="note">
+              Součet je podepsaná energie platných měřených úseků, nikoli odhad
+              celoživotní výroby.
+            </p>
+          </Card>
+        )}
         <BatteryCard data={data} />
         <Card>
           <CardHeading icon={<PlugZap size={19} />} title="Napájení systému" />
@@ -334,8 +436,8 @@ export function EnergyPage() {
             <strong>Nedostupné</strong>
           </div>
           <p className="note">
-            Spotřeba není měřena ani odhadována. Monitoring zdrojů a multiplexer
-            čekají na instalaci.
+            Spotřeba není měřena ani odhadována. Zdroj určuje pouze ověřené
+            zapojení ST; dostupnost adaptéru se samostatně neměří.
           </p>
         </Card>
         <div className="span-3">
@@ -363,11 +465,10 @@ export function EnergyPage() {
             icon={<BatteryMedium size={19} />}
             title="Přepínání zdrojů"
           />
-          <div className="empty-chart">
-            <PlugZap size={30} />
-            <strong>Zatím bez událostí</strong>
-            <span>Sledování přepnutí bude dostupné po instalaci hardwaru.</span>
-          </div>
+          <Events
+            events={data.events?.filter((e) => e.kind === "power")}
+            error={historyError}
+          />
         </Card>
       </div>
     </>
@@ -378,7 +479,7 @@ export function HistoryPage() {
   const [metric, setMetric] = useState<
     "temperature" | "humidity" | "solar" | "production" | "battery"
   >("temperature");
-  const { data, mode } = useHome(range);
+  const { data, mode, historyError } = useHome(range);
   return (
     <>
       <PageIntro
@@ -423,7 +524,7 @@ export function HistoryPage() {
         <p className="note">
           {mode === "demo"
             ? "Demo historie slouží k vyzkoušení grafů. Nejde o skutečná měření ani vypočtenou výrobu."
-            : "Ukládání a načítání skutečné historie čeká na budoucí backend."}
+            : "ESP32 uchovává nejvýše 288 vzorků po 5 minutách (24 h). Časy bez synchronizace se neumisťují do časového grafu. Výpadek napájení může ztratit posledních 30 minut; denní energie může být neúplná."}
         </p>
       </Card>
       <div className="two-columns">
@@ -431,16 +532,13 @@ export function HistoryPage() {
           <CardHeading icon={<Radio size={19} />} title="Dostupnost historie" />
           <p className="prose">
             Přehled teploty, vlhkosti a solárního výkonu podporuje období od
-            jedné hodiny po třicet dní. V živém režimu se historie zobrazí až po
-            integraci úložiště měření.
+            jedné hodiny po třicet dní. Živý firmware zatím uchovává posledních
+            24 hodin; delší filtr nevytváří chybějící data.
           </p>
         </Card>
         <Card>
-          <CardHeading icon={<Zap size={19} />} title="Události napájení" />
-          <p className="prose">
-            Zatím bez událostí. Historie přepínání zdrojů a měření baterie
-            vyžadují další hardware.
-          </p>
+          <CardHeading icon={<Zap size={19} />} title="Události zařízení" />
+          <Events events={data.events} error={historyError} />
         </Card>
       </div>
     </>

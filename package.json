@@ -1,6 +1,6 @@
 {
   "name": "home-assistant-esp32",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "prebuild": "node scripts/build-pwa.mjs icons",
-    "postbuild": "node scripts/build-pwa.mjs worker"
+    "postbuild": "node scripts/build-pwa.mjs worker",
+    "test:firmware": "node scripts/test-firmware-core.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

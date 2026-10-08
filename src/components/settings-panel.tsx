@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { TabletSettings } from "@/components/tablet/tablet-settings";
 import { validateEndpoint } from "@/services/data";
+import { LiveAccess } from "@/components/live-access";
 function Toggle({
   checked,
   onChange,
@@ -127,7 +128,7 @@ export function SettingsPanel() {
             <input
               type="url"
               value={endpoint}
-              placeholder="http://192.168.1.100/api"
+              placeholder="Prázdné = přihlášená místní brána"
               onChange={(e) => setEndpoint(e.target.value)}
               aria-invalid={invalid}
             />
@@ -135,6 +136,13 @@ export function SettingsPanel() {
           <Button variant="outline" onClick={saveEndpoint}>
             Uložit připojení
           </Button>
+          <p className="note">
+            Pro ovládání ponechte adresu prázdnou. Přímá HTTP(S) adresa slouží
+            jen ke čtení a vyžaduje vlastní CORS; firmware ve výchozím stavu
+            přímý prohlížeč odmítá. Živý stav se kvůli synchronizaci relé načítá
+            nejméně každých 5 sekund.
+          </p>
+          <LiveAccess />
           <label className="field-label">
             Interval aktualizace
             <select
@@ -150,8 +158,9 @@ export function SettingsPanel() {
           <div className="security-note">
             <ShieldCheck size={19} />
             <p>
-              Živé ovládání relé je zakázáno. Zabezpečený ovládací endpoint bude
-              doplněn v další fázi. Přihlašovací údaje se zde neukládají.
+              Ovládání používá přihlášenou místní bránu a klíč ESP32 uložený na
+              serveru. Heslo se neukládá do místního úložiště. Relé musí mít
+              předem ověřenou polaritu.
             </p>
           </div>
         </Card>
@@ -187,8 +196,8 @@ export function SettingsPanel() {
             Uložit polohu
           </Button>
           <p className="note">
-            Poloha se v této fázi používá jako popisek. Vyhledání souřadnic a
-            Open-Meteo budou připojeny později.
+            Poloha se vyhledá přes Open-Meteo. Předpověď je oddělená od
+            lokálního venkovního DHT22.
           </p>
         </Card>
         <Card>
@@ -215,20 +224,63 @@ export function SettingsPanel() {
             <strong>
               {data.diagnostics.uptime === null
                 ? "Nedostupné"
-                : `${Math.floor(data.diagnostics.uptime / 3600)} h · simulace`}
+                : `${Math.floor(data.diagnostics.uptime / 3600)} h ${Math.floor((data.diagnostics.uptime % 3600) / 60)} min${preferences.mode === "demo" ? " · simulace" : ""}`}
             </strong>
           </div>
           <div className="metric-row">
             <span>Firmware</span>
             <strong>{data.diagnostics.firmware || "Nedostupné"}</strong>
           </div>
+          {[
+            ["IP adresa", data.diagnostics.ip],
+            [
+              "Wi-Fi RSSI",
+              data.diagnostics.signal === null
+                ? null
+                : `${data.diagnostics.signal} dBm`,
+            ],
+            [
+              "Volná paměť",
+              data.diagnostics.freeHeap === undefined ||
+              data.diagnostics.freeHeap === null
+                ? null
+                : `${data.diagnostics.freeHeap} B`,
+            ],
+            ["Sestavení firmwaru", data.diagnostics.build],
+            ["Důvod restartu (ESP-IDF)", data.diagnostics.rebootReason],
+            [
+              "Synchronizovaný čas",
+              preferences.mode === "demo"
+                ? "Simulace"
+                : data.device.connected
+                  ? data.diagnostics.timeSynchronized
+                    ? "Ano"
+                    : "Ne · místní ovládání funguje dál"
+                  : "Nedostupné",
+            ],
+            [
+              "Úložiště historie",
+              preferences.mode === "demo"
+                ? "Simulace"
+                : data.device.connected
+                  ? data.diagnostics.storageReady
+                    ? "LittleFS připraveno"
+                    : "Jen paměť RAM · ověřte LittleFS"
+                  : "Nedostupné",
+            ],
+          ].map(([name, value]) => (
+            <div className="metric-row" key={String(name)}>
+              <span>{name}</span>
+              <strong>{value ?? "Nedostupné"}</strong>
+            </div>
+          ))}
           <div className="metric-row">
             <span>Aktualizace firmwaru</span>
-            <strong>Připravujeme</strong>
+            <strong>Heslem chráněné ArduinoOTA · podle konfigurace</strong>
           </div>
           <div className="metric-row">
             <span>Verze aplikace</span>
-            <strong>2.1.0 · Tablet</strong>
+            <strong>2.2.0 · Živé ESP32</strong>
           </div>
         </Card>
       </div>

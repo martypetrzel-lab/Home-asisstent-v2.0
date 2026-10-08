@@ -2437,4 +2437,13 @@ main {
   letter-spacing: 0;
 }
 
-.card-heading .text-link{min-height:44px;margin:-6px 0}.device-main>.icon-button{min-width:44px}.power-button{min-width:44px}
+.card-heading .text-link {
+  min-height: 44px;
+  margin: -6px 0;
+}
+.device-main > .icon-button {
+  min-width: 44px;
+}
+.power-button {
+  min-width: 44px;
+}

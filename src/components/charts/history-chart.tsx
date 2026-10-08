@@ -56,8 +56,14 @@ export function HistoryChart({
     temperature && preferences.unit === "fahrenheit"
       ? data.map((d) => ({
           ...d,
-          indoorTemperature: (d.indoorTemperature * 9) / 5 + 32,
-          outdoorTemperature: (d.outdoorTemperature * 9) / 5 + 32,
+          indoorTemperature:
+            d.indoorTemperature === null
+              ? null
+              : (d.indoorTemperature * 9) / 5 + 32,
+          outdoorTemperature:
+            d.outdoorTemperature === null
+              ? null
+              : (d.outdoorTemperature * 9) / 5 + 32,
         }))
       : dailyData;
   const keys = temperature
@@ -82,7 +88,10 @@ export function HistoryChart({
     indoorHumidity: "Uvnitř",
     outdoorHumidity: "Venku",
     solarPower: "Solární výkon",
-    solarEnergy: "Denní výroba (simulace)",
+    solarEnergy:
+      preferences.mode === "demo"
+        ? "Denní výroba (simulace)"
+        : "Naměřená denní energie · může být neúplná",
   };
   const colors = ["#e8b66a", "#7caaa4"];
   return (

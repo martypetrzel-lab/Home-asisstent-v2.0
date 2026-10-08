@@ -20,7 +20,7 @@
   min-width: var(--touch-size);
   min-height: var(--touch-size);
 }
-.wall-sensor-dot.unavailable {
+.wall-sensor-dot.sensor-unavailable {
   background: var(--muted);
 }
 .app-shell {

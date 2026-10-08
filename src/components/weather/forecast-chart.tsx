@@ -25,7 +25,7 @@ export function ForecastChart({ data }: { data: WeatherHourly[] }) {
     <div
       className="chart compact-chart"
       role="img"
-      aria-label="Simulovaná předpověď teploty na příštích 24 hodin"
+      aria-label={`${preferences.mode === "demo" ? "Simulovaná předpověď" : "Předpověď Open-Meteo"} teploty na příštích 24 hodin`}
     >
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <LineChart

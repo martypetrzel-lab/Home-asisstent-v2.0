@@ -18,7 +18,8 @@ export function ConfirmationDialog({
           <Dialog.Title>Přejít na živá data?</Dialog.Title>
           <Dialog.Description>
             Simulovaná měření zmizí. Bez připojeného ESP32 budou hodnoty
-            nedostupné. Ovládání relé vyžaduje budoucí zabezpečenou integraci.
+            nedostupné. Ovládání relé vyžaduje přihlášení k místní bráně a
+            ověřenou polaritu výstupu.
           </Dialog.Description>
           <div className="actions">
             <Dialog.Close asChild>

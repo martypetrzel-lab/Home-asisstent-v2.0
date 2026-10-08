@@ -3,10 +3,16 @@ export interface DeviceStatus {
   connected: boolean;
   name: string;
   lastUpdate: string | null;
+  measurementTimestamp?: string | null;
+  bootId?: string;
 }
 export interface IndoorClimate {
   temperature: number | null;
   humidity: number | null;
+  ageMs?: number | null;
+  available?: boolean;
+  minimum?: number | null;
+  maximum?: number | null;
 }
 export interface OutdoorClimate extends IndoorClimate {
   trend: number | null;
@@ -16,6 +22,15 @@ export interface SolarMeasurements {
   voltage: number | null;
   current: number | null;
   dailyEnergy: number | null;
+  shuntMv?: number | null;
+  ageMs?: number | null;
+  location?: string;
+  directionConfirmed?: boolean;
+  energyPartial?: boolean;
+  totalEnergy?: number | null;
+  minimum?: number | null;
+  maximum?: number | null;
+  rawCurrentMa?: number | null;
 }
 export interface BatteryStatus {
   voltage: number | null;
@@ -28,8 +43,19 @@ export interface RelayStatus {
   acknowledgedAt: string | null;
   timerMinutes?: number;
   turnOffAt?: number | null;
+  version?: number;
+  controlAvailable?: boolean;
+  feedbackAvailable?: boolean;
+  physicalOn?: boolean | null;
 }
 export interface WeatherCurrent {
+  description?: string;
+  humidity?: number | null;
+  cloudCover?: number | null;
+  precipitationMm?: number | null;
+  stale?: boolean;
+  fetchedAt?: string;
+  location?: string;
   temperature: number | null;
   feelsLike: number | null;
   wind: number | null;
@@ -55,18 +81,24 @@ export interface WeatherHourly {
 }
 export interface HistoryRecord {
   timestamp: string;
-  indoorTemperature: number;
-  outdoorTemperature: number;
-  indoorHumidity: number;
-  outdoorHumidity: number;
-  solarPower: number;
-  solarEnergy: number;
+  indoorTemperature: number | null;
+  outdoorTemperature: number | null;
+  indoorHumidity: number | null;
+  outdoorHumidity: number | null;
+  solarPower: number | null;
+  solarEnergy: number | null;
 }
 export interface SystemDiagnostics {
   uptime: number | null;
   signal: number | null;
   firmware: string | null;
   consumption: number | null;
+  ip?: string | null;
+  freeHeap?: number | null;
+  build?: string | null;
+  rebootReason?: number | null;
+  timeSynchronized?: boolean;
+  storageReady?: boolean;
 }
 export interface HomeSnapshot {
   device: DeviceStatus;
@@ -82,6 +114,12 @@ export interface HomeSnapshot {
   hourly: WeatherHourly[];
   history: HistoryRecord[];
   diagnostics: SystemDiagnostics;
+  events?: {
+    timestamp: string | null;
+    kind: string;
+    detail: string;
+    uptime: number;
+  }[];
 }
 export type HistoryRange = "1h" | "24h" | "7d" | "30d";
 export interface Preferences {

@@ -321,7 +321,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <strong>
               home<span>assistant</span>
             </strong>
-            <small>ESP32 / V2.1</small>
+            <small>ESP32 / V2.2</small>
           </div>
         </Link>
         <div className="nav-group-label">VAŠE DOMÁCNOST</div>
@@ -358,7 +358,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     ? "Síť není dostupná"
                     : stale
                       ? "Měření není aktuální"
-                      : "Zařízení není dostupné"}
+                      : "ESP32 není připojeno"}
                 </strong>
                 <p>
                   {!online
@@ -395,7 +395,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   : "ESP32 připojeno"}
             <small>
               {lastSuccessfulUpdate
-                ? `Poslední data ${time(lastSuccessfulUpdate)}`
+                ? `Poslední spojení ${time(lastSuccessfulUpdate)}`
                 : "Bez měření"}
             </small>
           </div>

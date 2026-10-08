@@ -28,6 +28,8 @@ import {
   tabletDefaults,
 } from "@/lib/tablet";
 import { useClock, useConnectivity } from "./use-display";
+import { apiRequest, parseHistory, setLiveRelay } from "@/services/esp32";
+import { getWeather, withWeather } from "@/services/weather";
 const defaults: Preferences = {
   ...tabletDefaults,
   mode: "demo",
@@ -36,7 +38,7 @@ const defaults: Preferences = {
   dim: false,
   screensaver: false,
   unit: "celsius",
-  location: "Praha",
+  location: "Nehvizdy",
   refresh: 15,
   endpoint: process.env.NEXT_PUBLIC_ESP32_API_URL || "",
 };
@@ -70,7 +72,8 @@ export function Providers({ children }: { children: ReactNode }) {
         kiosk: value.kiosk === true,
         dim: value.dim === true,
         screensaver: value.screensaver === true,
-        location: typeof value.location === "string" ? value.location : "Praha",
+        location:
+          typeof value.location === "string" ? value.location : "Nehvizdy",
         refresh: [5, 15, 30, 60].includes(value.refresh) ? value.refresh : 15,
         endpoint:
           typeof value.endpoint === "string"
@@ -165,9 +168,32 @@ export function useHome(range: HistoryRange = "24h") {
       return result;
     },
     enabled: ready,
-    refetchInterval: preferences.refresh * 1000,
+    refetchInterval:
+      (preferences.mode === "live"
+        ? Math.min(preferences.refresh, 5)
+        : preferences.refresh) * 1000,
     refetchOnReconnect: "always",
     refetchOnMount: "always",
+  });
+  const weatherQuery = useQuery({
+    queryKey: ["weather", preferences.location],
+    queryFn: ({ signal }) => getWeather(preferences.location, signal),
+    enabled: ready && preferences.mode === "live",
+    staleTime: 600000,
+    refetchInterval: 600000,
+    refetchOnReconnect: "always",
+    retry: false,
+  });
+  const historyQuery = useQuery({
+    queryKey: ["esp32-history", preferences.endpoint],
+    queryFn: async ({ signal }) =>
+      parseHistory(
+        await apiRequest(preferences.endpoint, "history", {}, signal),
+      ),
+    enabled: ready && preferences.mode === "live" && !!query.data,
+    staleTime: 60000,
+    refetchInterval: 60000,
+    retry: false,
   });
   useEffect(
     () =>
@@ -176,16 +202,69 @@ export function useHome(range: HistoryRange = "24h") {
       }),
     [client],
   );
+  useEffect(() => {
+    if (preferences.mode !== "live" || typeof BroadcastChannel === "undefined")
+      return;
+    const channel = new BroadcastChannel("home-esp32-live");
+    channel.onmessage = () =>
+      void client.invalidateQueries({ queryKey: ["home", "live"] });
+    return () => channel.close();
+  }, [preferences.mode, client]);
   const stale =
     preferences.mode === "live" &&
     !!query.data &&
     !isMeasurementFresh(query.data.device.lastUpdate, now.getTime());
+  const available =
+    query.isError || stale || (!online && preferences.mode === "live")
+      ? emptySnapshot()
+      : query.data || emptySnapshot();
+  let data = available;
+  if (preferences.mode === "live" && available.device.connected) {
+    const elapsed = Math.max(
+      0,
+      now.getTime() - Date.parse(available.device.lastUpdate!),
+    );
+    const fresh = (age: number | null | undefined) =>
+      typeof age === "number" && age + elapsed <= 15000;
+    data = {
+      ...available,
+      indoor: fresh(available.indoor.ageMs)
+        ? available.indoor
+        : { ...available.indoor, temperature: null, humidity: null },
+      outdoor: fresh(available.outdoor.ageMs)
+        ? available.outdoor
+        : { ...available.outdoor, temperature: null, humidity: null },
+      solar: fresh(available.solar.ageMs)
+        ? available.solar
+        : {
+            ...available.solar,
+            power: null,
+            voltage: null,
+            current: null,
+            rawCurrentMa: null,
+            shuntMv: null,
+          },
+      history:
+        historyQuery.data?.history.filter(
+          (r) =>
+            Date.parse(r.timestamp) >=
+            now.getTime() -
+              { "1h": 1, "24h": 24, "7d": 168, "30d": 720 }[range] * 3600000,
+        ) || [],
+      events: historyQuery.data?.events || [],
+    };
+  }
+  if (preferences.mode === "live")
+    data = withWeather(
+      data,
+      weatherQuery.data,
+      weatherQuery.isError || !online,
+    );
   return {
     ...query,
-    data:
-      query.isError || stale || (!online && preferences.mode === "live")
-        ? emptySnapshot()
-        : query.data || emptySnapshot(),
+    weatherError: weatherQuery.error,
+    data,
+    historyError: historyQuery.error,
     lastSuccessfulUpdate: query.data?.device.lastUpdate || stamp.data || null,
     online,
     stale,
@@ -195,16 +274,32 @@ export function useHome(range: HistoryRange = "24h") {
 export function useRelay() {
   const client = useQueryClient();
   const { preferences } = usePreferences();
+  const { data } = useHome();
   return useMutation({
     mutationKey: ["relay", preferences.mode],
     mutationFn: async (on: boolean) => {
-      if (preferences.mode !== "demo")
-        throw new Error("Zabezpečené ovládání relé zatím není připojeno.");
-      return setDemoRelay(on);
+      return preferences.mode === "demo"
+        ? setDemoRelay(on)
+        : setLiveRelay(
+            preferences.endpoint,
+            on,
+            data.relay,
+            data.device.bootId,
+          );
     },
     onSuccess: () => {
-      void client.invalidateQueries({ queryKey: ["home", "demo"] });
+      void client.invalidateQueries({ queryKey: ["home", preferences.mode] });
+      if (
+        preferences.mode === "live" &&
+        typeof BroadcastChannel !== "undefined"
+      ) {
+        const channel = new BroadcastChannel("home-esp32-live");
+        channel.postMessage("relay");
+        channel.close();
+      }
     },
+    onSettled: () =>
+      void client.invalidateQueries({ queryKey: ["home", preferences.mode] }),
   });
 }
 export function useTemperature() {

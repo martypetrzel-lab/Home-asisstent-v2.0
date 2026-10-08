@@ -185,7 +185,7 @@ export function TabletSettings() {
         <p>
           <strong>Chování offline:</strong> uloží se pouze rozhraní, nikoli živá
           měření. Při výpadku se data skryjí, zůstane čas posledního úspěšného
-          měření a připojení se automaticky opakuje. Offline podpora vyžaduje
+          spojení a připojení se automaticky opakuje. Offline podpora vyžaduje
           první úspěšné načtení produkční verze přes HTTPS nebo localhost.
         </p>
       </div>

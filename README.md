@@ -1,89 +1,38 @@
-# Home Assistant ESP32 v2.0
+# Home Assistant ESP32 v2.0 — 2.2.0
 
-České tabletové rozhraní pro přehled domácnosti, klima, kuchyňské světlo a solární energii. **Fáze 1 je pouze frontend.** Repozitář neobsahuje firmware, zapojení GPIO ani skutečné ovládání relé.
+Český tabletový dashboard a kompletní Arduino IDE sketch ESP32: dva DHT22, solární INA219, potvrzované řízení GPIO relé, místní API, přihlášení, diagnostika a omezená historie. Premium rozhraní a landscape kiosk zůstávají zachované. **Fyzické zařízení nebylo testováno ani flashováno.**
 
-![Tabletový přehled 1280 × 800](docs/screenshots/kiosk-1280x800.jpg)
+![Tabletový přehled](docs/screenshots/kiosk-1280x800.jpg)
 
-## Spuštění
+## Začít
 
-Použijte Node.js 22 LTS nebo novější podporovanou verzi a npm.
+1. Ověřte [hardware](docs/HARDWARE.md), [GPIO](docs/GPIO.md), [zapojení](docs/WIRING.md) a [napájení](docs/POWER.md).
+2. Nastavte konfiguraci a ručně nahrajte firmware podle [FLASHING](docs/FLASHING.md). Obě relé mají původní ACTIVE LOW logiku a při startu jsou vypnutá.
+3. Nastavte .env.local, místní Next server a tablet podle [TABLET](docs/TABLET.md).
+4. Kontrakt a export historie: [API](docs/API.md). Fyzické testy a řešení chyb: [TROUBLESHOOTING](docs/TROUBLESHOOTING.md).
 
-```sh
-npm install
-npm run dev
-```
+Samotné demo: Node.js 22, `npm ci`, `npm run dev`, otevřít http://localhost:3000. Ve Windows lze použít npm.cmd. Produkce: `npm run build`, `npm start`.
 
-Otevřete [http://localhost:3000](http://localhost:3000). Na Windows lze při omezení PowerShell skriptů použít `npm.cmd`.
+## Chování
 
-Produkční spuštění:
+Demo je označená simulace. Živý režim nikdy nedoplňuje ukázkové hodnoty při chybě. Místní server schovává klíč ESP32; browser má dočasnou HttpOnly session. Světlo čeká na potvrzení konkrétního GPIO příkazu, řeší konflikty verzí a obnovuje stav mezi klienty. Fyzické kontakty/lampa nemají zpětnou vazbu.
 
-```sh
-npm run build
-npm start
-```
+Senzory a místní tlačítko běží nezávisle i bez Wi-Fi. Stáří nad 15 s měření zneplatní. Denní i celkové sledované Wh integrují skutečný čas platných vzorků až po ověření směru a času. LittleFS checkpoint po 30 min omezuje opotřebení; historie má nejvýše 288 vzorků a 48 událostí. Baterie/SOC jsou null, TPS výchozí neinstalovaný, zdroj UNKNOWN. Tablet má vlastní síťové napájení. Aktuální počasí, 24hodinovou a sedmidenní předpověď dodává Open-Meteo nezávisle na ESP32; keš 10 min, při výpadku nejvýše 60 min.
 
-Volitelně zkopírujte `.env.example` do `.env.local` a nastavte `NEXT_PUBLIC_ESP32_API_URL`. Stejnou veřejnou adresu lze uložit v Nastavení. Proměnná ani nastavení nesmí obsahovat přihlašovací údaje. Nastavení v prohlížeči má přednost před výchozí proměnnou. Aplikace nepotřebuje databázi, Railway ani externí účet; písma a ikony nenačítá z CDN.
+Povinný vstupní sketch: [HomeAssistant_ESP32_v2.ino](firmware/arduino/HomeAssistant_ESP32_v2/HomeAssistant_ESP32_v2.ino); Arduino IDE i PlatformIO sestavují stejné moduly. Původní firmware byl nalezen mimo repozitář a zůstal beze změn; [migrace a rotace přístupů](docs/MIGRACE.md).
 
-## Hotové funkce
+## Struktura
 
-| Stránka                | Obsah                                                                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Přehled `/`            | Jedna obrazovka na šířku: klima, aktuální/denní/hodinové počasí, světlo, solární výkon, baterie, zdroj, čas a navigace      |
-| Domácnost `/domacnost` | DHT22 senzory, rozdíly, minima a maxima, teplota a vlhkost v čase, ovládání světla                                          |
-| Počasí `/pocasi`       | Simulované aktuální počasí, hodinový výhled a graf, sedm dní, déšť, vítr, nárazy, tlak, východ a západ slunce               |
-| Energie `/energie`     | Panel, INA219, AGM baterie, dostupnost zdrojů, denní a týdenní grafy, plánovaný tok energie včetně samostatné větve tabletu |
-| Historie `/historie`   | Výběr veličiny a období 1 h / 24 h / 7 dní / 30 dní, interaktivní grafy a prázdné stavy                                     |
-| Nastavení `/nastaveni` | Vzhled, kiosk, ztlumení, šetřič, jednotky, poloha, interval, API, diagnostika a verze                                       |
+- `firmware/arduino/HomeAssistant_ESP32_v2/config.h`: piny, schopnosti, intervaly a oddělená tajemství.
+- `firmware/arduino/HomeAssistant_ESP32_v2/`: senzory, relé, síť/OTA, API, historie; `src/core/`: testovatelná logika a JSON.
+- `src/services/esp32.ts`: živý adaptér; data.ts: demo; hooks/use-home.tsx: sdílený stav a synchronizace.
+- `src/app/api/`: přihlášení a autentizovaná brána; src/components/: zachované české obrazovky.
 
-- Tmavý a světlý vzhled; responzivní mřížka a mobilní spodní navigace.
-- České číselné formátování, datum, 24hodinový čas v zóně Europe/Prague.
-- Potvrzený stav demo světla až po asynchronní odezvě, průběžný stav a chybová větev.
-- Demo časovač 1 / 5 / 15 / 30 minut přetrvává při změně stránky i obnovení aplikace. Platí pouze pro simulaci; zavřený prohlížeč neovládá žádné zařízení.
-- Synchronizace demo relé mezi kartami stejného původu pomocí BroadcastChannel, pravidelná obnova dat a přepnutí režimu mezi kartami pomocí události úložiště.
-- Lokální uložení nesenzitivních preferencí; při blokovaném úložišti fungují v paměti.
-- Klávesové ovládání, viditelný fokus, popisky ovladačů, přístupný dialog Radix/shadcn a respektování omezeného pohybu.
+## Kontroly
 
-## Demo a živý režim
+`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `py -3 -m platformio run -d firmware`, `py -3 -m platformio run -d firmware -t buildfs`, `npm run test:firmware`.
 
-Při prvním spuštění je aktivní **DEMO REŽIM**, trvale označený v záhlaví. Všechna demo měření, počasí a stavy napájení jsou simulované. Demo provider je jediným zdrojem ukázkových měření.
-
-Přechod do **ŽIVÉHO REŽIMU** má potvrzovací dialog. Aplikace neposkytuje demo náhradu za neúspěšné API. Chyba spojení skryje předchozí měření, zobrazí vysvětlení a nabídne opakování. Neznámé hodnoty mají stav „Nedostupné“.
-
-Čtení senzoru používá `GET {endpoint}/status`, timeout 6 sekund, bez cache a bez přihlašovacích údajů. Endpoint musí vrátit JSON s aktuálním časem ISO 8601, například v tomto tvaru; uvedené hodnoty jsou pouze ilustrace kontraktu:
-
-```json
-{
-  "device": { "connected": true, "lastUpdate": "2026-10-08T10:00:00.000Z" },
-  "indoor": { "temperature": 22.4, "humidity": 46 },
-  "outdoor": { "temperature": 16.8, "humidity": 64 },
-  "solar": {
-    "power": 7.6,
-    "voltage": 18.2,
-    "current": 0.418,
-    "dailyEnergy": null
-  },
-  "relay": { "on": false, "acknowledgedAt": null }
-}
-```
-
-Při implementaci endpointu nahraďte ukázkový čas aktuálním časem měření. Odpovědi starší než dvě minuty, neplatný JSON a neplatný stav zařízení se odmítají. Chybějící a nečíselné hodnoty se převedou na `null`. Současný adaptér přijímá pouze stávající senzory a stav relé; budoucí baterii, zdroje, počasí a historii z této odpovědi nepřebírá. Pokud API běží na jiném původu, musí budoucí server povolit příslušné CORS. HTTPS stránka nemůže běžně načítat HTTP API; pro produkční instalaci počítejte s odpovídající zabezpečenou bránou.
-
-**Živé ovládání relé zůstává zakázané i po zadání adresy API.** V této fázi není implementován autentizovaný zapisovací endpoint. Budoucí adaptér musí ověřovat potvrzení konkrétního příkazu, řešit timeout a pravidelně synchronizovat potvrzený stav s ostatními klienty. Komponenty mohou nadále používat společný hook `useRelay`; nesmějí přidávat vlastní přímé požadavky na ESP32.
-
-## Architektura
-
-- `src/app/`: App Router, šest skutečných cest, společný layout, česká metadata a ikona.
-- `src/types/`: typované kontrakty senzorů, počasí, historie, diagnostiky a preferencí.
-- `src/services/data.ts`: oddělené funkce demo provideru a živého adaptéru, validace, timeout a simulace relé.
-- `src/hooks/use-home.tsx`: TanStack Query, kontext preferencí, obnova a oddělené klíče cache podle režimu, endpointu a období.
-- `src/components/dashboard/`: znovupoužitelné karty a přehled.
-- `src/components/charts/`, `src/components/weather/`: responzivní grafy Recharts.
-- `src/components/ui/`: lokální komponenty ve stylu shadcn/ui, Radix dialog a variantní Button; konfigurace v `components.json`.
-- `src/components/app-shell.tsx`: navigace, záhlaví, kiosk a šetřič.
-- `src/components/settings-panel.tsx`: nastavení a validace uživatelských vstupů.
-- `src/app/globals.css`: vlastní design systém, Tailwind CSS 4 a responzivní styly.
-
-Komponenty neprovádějí požadavky na zařízení. API lze později rozšířit ve službách bez přestavby obrazovek. Historie je zatím v paměti demo provideru, není uchovávána v databázi.
+Hostitelské firmware testy potřebují g++ na Linuxu nebo Python ziglang 0.16.0 na Windows, po stažení ArduinoJson sestavením PlatformIO. CI kontroluje web i firmware. Starší vizuální kontroly [VALIDACE](docs/VALIDACE.md) se vztahují k tabletové vrstvě.
 
 ## Režim tabletu
 
@@ -104,38 +53,6 @@ Pro spravovaný tablet lze použít podporované řešení **Android Enterprise 
 
 V Androidu nastavte přiměřený **hardwarový jas**, dobu zhasnutí obrazovky a podle podporovaných možností výjimku pro úsporu energie kiosk aplikace. Ověřte probuzení po restartu i po přerušení napájení. Webová vrstva neslibuje spolehlivé zabránění uspání na každém Androidu; fyzicky zhasnutý displej samotný webový dotykový překryv neprobudí. Zvolte jeden hlavní plán uspávání/probouzení v Androidu nebo kiosku a sladěte jej s nočním plánem aplikace.
 
-**Offline a obnova spojení:** service worker ukládá stránky a jejich místní statické soubory, nikoli ESP32 API, živá měření ani zapisovací požadavky. Po prvním úspěšném načtení může zobrazit rozhraní i při výpadku serveru. Browser offline stav nebo chyba/stáří API skryje živé hodnoty. Uloží se pouze čas posledního úspěšného měření, odděleně pro režim a endpoint; přežije obnovení stránky. Dotazy se opakují ve zvoleném intervalu a při návratu připojení. Demo zůstává viditelně označenou simulací i offline. Cache může Android/prohlížeč odstranit, proto ji nepovažujte za náhradu spolehlivého serveru.
+**Offline a obnova spojení:** service worker ukládá stránky a jejich místní statické soubory, nikoli ESP32 API, živá měření ani zapisovací požadavky. Po prvním úspěšném načtení může zobrazit rozhraní i při výpadku serveru. Browser offline stav nebo chyba/stáří API skryje živé hodnoty. Uloží se pouze čas posledního úspěšného spojení, odděleně pro režim a endpoint; přežije obnovení stránky. Dotazy se opakují ve zvoleném intervalu a při návratu připojení. Demo zůstává viditelně označenou simulací i offline. Cache může Android/prohlížeč odstranit, proto ji nepovažujte za náhradu spolehlivého serveru.
 
 Po nové verzi se offline shell uloží do nové cache; čekající service worker se aktivuje po zavření všech oken této aplikace. Pro aktualizaci ukončete její PWA/kiosk okna a znovu otevřete stránku online. Před montáží prakticky vyzkoušejte restart tabletu, ztrátu Wi-Fi, obnovení stránky bez serveru, návrat API, noční plán a první dotyk po ztlumení. Automatický start, systémové lišty a dlouhodobý provoz je nutné ověřit na konkrétním tabletu.
-
-## Ověření
-
-```sh
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
-
-Čtrnáct testů ověřuje datovou vrstvu, potvrzení demo relé, noční intervaly, validaci tabletových preferencí, stáří měření, offline fallback, oddělení API od cache a vytvoření spustitelného service workeru. Automatická kontrola na GitHubu spouští stejné kroky.
-
-Ruční prohlížečová kontrola a rozsah ověření jsou v [docs/VALIDACE.md](docs/VALIDACE.md). Snímky obsahují výhradně simulované hodnoty nebo nepřipojený živý stav:
-
-- [1024 × 600](docs/screenshots/kiosk-1024x600.jpg)
-- [1280 × 800](docs/screenshots/kiosk-1280x800.jpg)
-- [1920 × 1200](docs/screenshots/kiosk-1920x1200.jpg)
-- [Portrét 800 × 1280](docs/screenshots/kiosk-800x1280.jpg)
-- [Světlý tablet](docs/screenshots/light-tablet.jpg)
-- [Telefon](docs/screenshots/mobile-overview.jpg)
-- [Živý režim bez zařízení](docs/screenshots/live-unavailable.jpg)
-
-## Integrace pro další fázi
-
-- Skutečný ESP32 firmware, čtecí API, autentizace a potvrzované příkazy relé.
-- Open-Meteo a geokódování uložené polohy.
-- Uložení historie, skutečná denní výroba a serverová synchronizace klientů.
-- Měření proudu a napětí baterie, dostupnosti sítě a aktivního zdroje.
-- Instalace objednaného TPS2116 a ověření hybridního systému i samostatného napájení tabletu.
-- Diagnostika a bezpečný mechanismus aktualizace firmwaru.
-
-TPS2116 není prezentován jako instalovaný. Stav nabití se nepočítá z jediného napětí; procento nabití je bez potřebného měření vždy nedostupné. Spotřeba ESP32 se nevydává za naměřenou ani odhadnutou. Žádná z těchto integrací není v této fázi skutečně provozována.

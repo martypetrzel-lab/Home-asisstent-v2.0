@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { liveFixture } from "./fixtures";
 import {
   demoSnapshot,
   emptySnapshot,
@@ -23,14 +24,13 @@ test("live defaults contain no simulated measurements or installed future hardwa
   assert.deepEqual(data.forecast, []);
 });
 test("live parser accepts installed sensors, ignores demo and future hardware", () => {
-  const data = parseLiveSnapshot({
-    ...demoSnapshot(),
-    indoor: { temperature: 20.5, humidity: NaN },
-    solar: { power: "7.6", voltage: 18, current: 0.4 },
-  });
+  const fixture = liveFixture();
+  fixture.climate.indoor.temperatureC = 20.5;
+  fixture.climate.indoor.humidityPct = NaN;
+  const data = parseLiveSnapshot(fixture);
   assert.equal(data.indoor.temperature, 20.5);
   assert.equal(data.indoor.humidity, null);
-  assert.equal(data.solar.power, null);
+  assert.equal(data.solar.power, 7.2);
   assert.equal(data.solar.current, 0.4);
   assert.equal(data.battery.voltage, null);
   assert.equal(data.battery.charge, null);
@@ -78,6 +78,8 @@ test("demo histories cover requested ranges with bounded sensor values", () => {
     assert.ok(
       data.history.every(
         (d) =>
+          d.solarPower !== null &&
+          d.indoorHumidity !== null &&
           d.solarPower >= 0 &&
           d.solarPower <= 10 &&
           d.indoorHumidity >= 0 &&
@@ -104,27 +106,24 @@ test("failed live requests reject without silently returning demo data", async (
   t.mock.method(globalThis, "fetch", async () => {
     throw new Error("offline");
   });
-  await assert.rejects(getLiveSnapshot("http://device.local"), /Spojení/);
+  await assert.rejects(
+    getLiveSnapshot("http://device.local"),
+    /není připojeno/,
+  );
   await assert.rejects(getLiveSnapshot(""), /není připojeno/);
 });
-test("live service requests the status endpoint with no cached or credentialed request", async (t) => {
+test("live service requests the v1 state endpoint with no cached or cross-origin credentials", async (t) => {
   let requestUrl = "";
   let options: RequestInit | undefined;
   t.mock.method(globalThis, "fetch", async (url: string, init: RequestInit) => {
     requestUrl = url;
     options = init;
-    return new Response(
-      JSON.stringify({
-        device: { connected: true, lastUpdate: new Date().toISOString() },
-        indoor: { temperature: 23, humidity: 49 },
-      }),
-      { status: 200 },
-    );
+    return new Response(JSON.stringify(liveFixture()), { status: 200 });
   });
   const data = await getLiveSnapshot("http://device.local/api");
-  assert.equal(requestUrl, "http://device.local/api/status");
+  assert.equal(requestUrl, "http://device.local/api/state");
   assert.equal(options?.cache, "no-store");
   assert.equal(options?.credentials, "omit");
   assert.equal(data.indoor.temperature, 23);
-  assert.equal(data.solar.power, null);
+  assert.equal(data.solar.power, 7.2);
 });

@@ -7,8 +7,8 @@ import {
   Check,
   ChevronRight,
   CloudSun,
+  CloudRain,
   Droplets,
-  ExternalLink,
   House,
   Lightbulb,
   LoaderCircle,
@@ -105,7 +105,7 @@ export function ConnectionStatus() {
         ? "Simulované připojení"
         : data.device.connected
           ? "ESP32 připojeno"
-          : "ESP32 nepřipojeno"}
+          : "ESP32 není připojeno"}
     </span>
   );
 }
@@ -221,16 +221,20 @@ export function LightingControl() {
           <Lightbulb size={32} strokeWidth={1.4} />
         </div>
         <div>
-          <h3>Nad kuchyňskou linkou</h3>
-          <p>LED osvětlení nad troubou</p>
+          <h3>LED osvětlení nad troubou</h3>
+          <p>Kuchyňské světlo</p>
           <span className={on ? "healthy" : "muted"}>
             {pending
               ? "Čekám na potvrzení…"
               : data.relay.on === null
                 ? "Stav nedostupný"
                 : on
-                  ? "Světlo je zapnuté"
-                  : "Světlo je vypnuté"}
+                  ? mode === "live"
+                    ? "Příkaz GPIO: zapnuto"
+                    : "Světlo je zapnuté"
+                  : mode === "live"
+                    ? "Příkaz GPIO: vypnuto"
+                    : "Světlo je vypnuté"}
           </span>
         </div>
         <button
@@ -239,7 +243,11 @@ export function LightingControl() {
             on ? "Vypnout kuchyňské světlo" : "Zapnout kuchyňské světlo"
           }
           aria-pressed={on}
-          disabled={mode === "live" || pending}
+          disabled={
+            pending ||
+            (mode === "live" &&
+              (!data.device.connected || !data.relay.controlAvailable))
+          }
           onClick={() => mutation.mutate(!on)}
         >
           {pending ? <LoaderCircle className="spin" /> : <Power />}
@@ -270,7 +278,7 @@ export function LightingControl() {
             ? deadline
               ? `Vypnutí za ${Math.max(0, Math.ceil((deadline - clock) / 1000))} s`
               : "Simulované ovládání"
-            : "Vyžaduje zabezpečené API"}
+            : "Potvrzení GPIO · fyzický stav světla se neměří"}
         </small>
       </div>
       {mutation.isError && (
@@ -286,15 +294,25 @@ export function WeatherCard({ data }: { data: HomeSnapshot }) {
   const temp = useTemperature();
   const { preferences } = usePreferences();
   const weather = data.weather;
+  const WeatherIcon =
+    weather.condition === "rain"
+      ? CloudRain
+      : weather.condition === "sunny"
+        ? Sun
+        : CloudSun;
   return (
     <Card className="weather-card">
       <CardHeading
         icon={<CloudSun size={19} />}
         title="Počasí"
-        detail={<span className="sensor-tag">{preferences.location}</span>}
+        detail={
+          <span className="sensor-tag">
+            {weather.location || preferences.location}
+          </span>
+        }
       />
       {weather.temperature === null ? (
-        <SensorUnavailableState text="Internetová předpověď zatím není připojena" />
+        <SensorUnavailableState text="Internetová předpověď není dostupná" />
       ) : (
         <>
           <div className="weather-now">
@@ -303,10 +321,11 @@ export function WeatherCard({ data }: { data: HomeSnapshot }) {
                 {temp(weather.temperature)}
               </div>
               <p>
-                Polojasno <span>· Pocitově {temp(weather.feelsLike)}</span>
+                {weather.description || "Polojasno"}{" "}
+                <span>· Pocitově {temp(weather.feelsLike)}</span>
               </p>
             </div>
-            <CloudSun
+            <WeatherIcon
               size={66}
               strokeWidth={1.2}
               className="weather-hero-icon"
@@ -358,7 +377,13 @@ export function WeatherCard({ data }: { data: HomeSnapshot }) {
       )}
       <Link href="/pocasi" className="card-link">
         Internetová předpověď ·{" "}
-        {preferences.mode === "demo" ? "simulace" : "nepřipojeno"}{" "}
+        {preferences.mode === "demo"
+          ? "simulace"
+          : weather.temperature === null
+            ? "nedostupné"
+            : weather.stale
+              ? "Open-Meteo · starší data"
+              : "Open-Meteo"}{" "}
         <ChevronRight size={16} />
       </Link>
     </Card>
@@ -415,7 +440,7 @@ export function SolarCard({ data }: { data: HomeSnapshot }) {
       </div>
       <div className="solar-details">
         <div>
-          <span>Napětí panelu</span>
+          <span>Napětí sběrnice INA</span>
           <strong>
             {data.solar.voltage === null
               ? "Nedostupné"
@@ -423,7 +448,7 @@ export function SolarCard({ data }: { data: HomeSnapshot }) {
           </strong>
         </div>
         <div>
-          <span>Proud panelu</span>
+          <span>Proud měřené větve</span>
           <strong>
             {data.solar.current === null
               ? "Nedostupné"
@@ -554,23 +579,17 @@ export function EnergyFlowDiagram() {
         <div className="flow-node planned">
           <PlugZap />
           <strong>Hybridní systém</strong>
-          <span>TPS2116 · plánováno</span>
+          <span>Ochrany + DC/DC 12→5 V + TPS2116 · plán</span>
         </div>
         <span className="flow-arrow">→</span>
-        <div className="flow-branches">
-          <div className="flow-node">
-            <Radio />
-            <strong>ESP32</strong>
-          </div>
-          <div className="flow-node planned">
-            <ExternalLink />
-            <strong>Android tablet</strong>
-            <span>Samostatná větev</span>
-          </div>
+        <div className="flow-node">
+          <Radio />
+          <strong>ESP32</strong>
         </div>
       </div>
       <p className="flow-caption">
-        <PlugZap size={16} /> Síťový adaptér 5 V / 3 A → hybridní systém{" "}
+        <PlugZap size={16} /> Síťový adaptér 5 V → VIN1 TPS2116. Tablet →
+        vlastní síťový adaptér, mimo TPS2116.{" "}
         <span>
           {mode === "demo"
             ? "Demo neověřuje skutečné zapojení."

@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BatteryMedium,
   CloudSun,
+  CloudRain,
   Droplets,
   House,
   PlugZap,
@@ -24,6 +25,12 @@ import {
 } from "./cards";
 export function TabletDashboard() {
   const { data, mode } = useHome();
+  const WeatherIcon =
+    data.weather.condition === "rain"
+      ? CloudRain
+      : data.weather.condition === "sunny"
+        ? Sun
+        : CloudSun;
   const temp = useTemperature();
   const { preferences } = usePreferences();
   const difference =
@@ -54,7 +61,7 @@ export function TabletDashboard() {
               title={name}
               detail={
                 <span
-                  className={`wall-sensor-dot ${climate.temperature === null ? "unavailable" : ""}`}
+                  className={`wall-sensor-dot ${climate.temperature === null ? "sensor-unavailable" : ""}`}
                   aria-label={
                     climate.temperature === null
                       ? "Senzor nedostupný"
@@ -114,13 +121,17 @@ export function TabletDashboard() {
         <CardHeading
           icon={<CloudSun size={20} />}
           title="Počasí"
-          detail={<span className="wall-location">{preferences.location}</span>}
+          detail={
+            <span className="wall-location">
+              {data.weather.location || preferences.location}
+            </span>
+          }
         />
         {data.weather.temperature === null ? (
           <div className="wall-weather-empty">
             <CloudSun size={55} strokeWidth={1} />
             <strong>Nedostupné</strong>
-            <p>Internetová předpověď zatím není připojena.</p>
+            <p>Internetová předpověď není dostupná.</p>
             <small>Venkovní DHT22 najdete v kartě klimatu.</small>
           </div>
         ) : (
@@ -131,11 +142,11 @@ export function TabletDashboard() {
                   {temp(data.weather.temperature)}
                 </span>
                 <p>
-                  Polojasno{" "}
+                  {data.weather.description || "Polojasno"}{" "}
                   <span>· Pocitově {temp(data.weather.feelsLike)}</span>
                 </p>
               </div>
-              <CloudSun
+              <WeatherIcon
                 className="wall-weather-icon"
                 size={74}
                 strokeWidth={1.25}
@@ -209,9 +220,20 @@ export function TabletDashboard() {
           </>
         )}
         <div className="wall-weather-source">
-          {mode === "demo"
-            ? "Internetová předpověď · simulace"
-            : "Internetové počasí · nepřipojeno"}
+          {mode === "demo" ? (
+            "Internetová předpověď · simulace"
+          ) : data.weather.temperature === null ? (
+            "Internetové počasí · nedostupné"
+          ) : (
+            <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+              Open-Meteo ·{" "}
+              {data.weather.stale
+                ? "starší předpověď"
+                : data.weather.fetchedAt
+                  ? `obnoveno ${time(data.weather.fetchedAt)}`
+                  : "předpověď"}
+            </a>
+          )}
         </div>
       </Card>
       <div className="wall-controls" data-area="controls">

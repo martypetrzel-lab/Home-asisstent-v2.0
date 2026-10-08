@@ -7,3 +7,6 @@ out/
 next-env.d.ts
 public/sw.js
 test-results/
+firmware/.pio/
+firmware/arduino/HomeAssistant_ESP32_v2/secrets.h
+firmware/platformio-ota.ini
