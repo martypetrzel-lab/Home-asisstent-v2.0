@@ -9,3 +9,5 @@ Hardware nastavuje config.h. Wi-Fi, API klíč a OTA heslo patří do ignorovan�
 Postup Library Manageru, USB, LittleFS a OTA: [FLASHING](../docs/FLASHING.md). Zapojení: [GPIO](../docs/GPIO.md), [WIRING](../docs/WIRING.md). Kontrakt: [API](../docs/API.md). Původní systém a změny: [MIGRACE](../docs/MIGRACE.md).
 
 Žádný fyzický test ani automatický upload nebyl proveden. Neověřený směr proudu blokuje energii; bateriová měření jsou null. Tablet je napájen nezávisle.
+
+Pro úplný firmware v jediném souboru spusťte z kořene projektu `node scripts/export-firmware.mjs`. Vytvoří `exports/HomeAssistant_ESP32_v2_full/HomeAssistant_ESP32_v2_full.ino` se všemi moduly a prázdnými přístupovými údaji. Otevřete jej samostatně v Arduino IDE; nevkládejte do modulární složky, vznikly by duplicitní definice. Export je generovaný ze stejné implementace a nikdy nečte místní secrets.h. Vyplňte vlastní údaje v jeho úvodu. Složka exports je ignorovaná Gitem, aby se pozdější vyplněná hesla necommitovala.

@@ -10,3 +10,4 @@ test-results/
 firmware/.pio/
 firmware/arduino/HomeAssistant_ESP32_v2/secrets.h
 firmware/platformio-ota.ini
+exports/
