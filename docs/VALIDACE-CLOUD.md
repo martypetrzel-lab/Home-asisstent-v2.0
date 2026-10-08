@@ -12,3 +12,9 @@ Ověřeno 8. 10. 2026, software bez připojeného fyzického ESP32:
 - Soukromý export obsahuje vygenerovaný klíč shodný s lokálním souborem hodnot pro Railway. ZIP byl ověřen proti přesným bajtům `.ino`. Soukromé soubory jsou ignorované Gitem.
 
 Neověřeno: vložení soukromých proměnných a volume do Railway účtu uživatele, nahrání do jeho ESP32, fyzické senzory/relé, dlouhodobá spotřeba paměti při TLS a výpadcích domácí Wi-Fi. Tyto kroky vyžadují nastavení služby a skutečný hardware podle [návodu](RAILWAY.md). Veřejný dashboard při kontrole zobrazoval demo; není to důkaz přenosu ze skutečného ESP32.
+
+## Příprava skutečné Railway služby
+
+Následně byl doplněn start `npm run start:railway`, Node 24, kontrola připojeného volume a `/api/health`. Celkem 26 testů prošlo, stejně jako lint a produkční build. Skutečný místní server spuštěný cloudovým startovacím skriptem na portu 3003 odpověděl HTTP 200 a `configuration: true, storage: true`; `/api/config` potvrdil výchozí živý režim.
+
+V Railway účtu byla ověřena služba Home-asisstent-v2.0 v projektu friendly-balance, správná doména, GitHub větev main, jedna replika a vypnuté Serverless. Devět změn včetně vytvoření/připojení volume `/data`, build/start/healthcheck/timeout/retry/CI bylo připraveno jako staged changes. Soukromé hodnoty a závěrečné společné nasazení zůstávají na majiteli účtu. Příprava nastavení není potvrzením živého příjmu z fyzického ESP32.

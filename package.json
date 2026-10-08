@@ -6,6 +6,7 @@
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
+    "start:railway": "node scripts/start-railway.mjs",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
@@ -40,6 +41,6 @@
     "typescript": "^5.9.0"
   },
   "engines": {
-    "node": ">=22.13.0"
+    "node": "24.x"
   }
 }

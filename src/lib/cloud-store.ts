@@ -61,6 +61,9 @@ export class CloudStore {
   close() {
     this.db.close();
   }
+  checkStorage() {
+    this.db.prepare("SELECT 1").get();
+  }
   private transaction<T>(work: () => T): T {
     this.db.exec("BEGIN IMMEDIATE");
     try {

@@ -8,7 +8,11 @@ Tablet otevírá [váš dashboard](https://home-asisstent-v20-production.up.rail
 
 ## 1. Nastavení služby Railway
 
-Ve službě připojené k tomuto GitHub repozitáři použijte větev `main`, kořen projektu a jednu repliku. Build je `npm run build`, start `npm start`. Vypněte uspávání služby (Serverless), aby první připojení po nečinnosti nečekalo na start serveru.
+Ve službě připojené k tomuto GitHub repozitáři použijte větev `main`, kořen projektu a jednu repliku. V Settings nastavte Build Command `npm run build`, Start Command `npm run start:railway`, Healthcheck Path `/api/health` a ponechte vypnuté Serverless. Doporučená volba Wait for CI zapnutá. Node je v package.json nastaven na řadu 24.
+
+Nastavení se ukládá přímo do služby Railway. Aktuální rozhraní Railway uvádí, že nové služby už od 28. 8. 2026 nemohou zapnout staré Config as Code; proto tento projekt nepoužívá railway.json. [Aktuální infrastruktura Railway](https://docs.railway.com/infrastructure-as-code).
+
+Start pro Railway nastaví veřejné výchozí hodnoty (cloudový režim, ID zařízení, /data a původ této domény), ověří tři odlišná tajemství a skutečně připojený volume. Pokud něco chybí, vypíše pouze názvy chybějících hodnot a nespustí neúplnou konfiguraci. Tajemství se nevypisují. `/api/health` ověřuje konfiguraci a přístup k SQLite; nevyžaduje zapnuté fyzické ESP32.
 
 Připojte ke službě **Volume**, mount path **`/data`**. Uchovává databázi `home.sqlite` včetně historie a stavů příkazů přes restart/nasazení. Bez volume data při novém nasazení zaniknou. SQLite je určeno pro jednu repliku. [Oficiální návod Railway k volumes](https://docs.railway.com/volumes).
 
