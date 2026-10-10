@@ -221,7 +221,7 @@ export function LightingControl() {
           <Lightbulb size={32} strokeWidth={1.4} />
         </div>
         <div>
-          <h3>LED osvětlení nad troubou</h3>
+          <h3>Světlo pod troubou</h3>
           <p>Kuchyňské světlo</p>
           <span className={on ? "healthy" : "muted"}>
             {pending

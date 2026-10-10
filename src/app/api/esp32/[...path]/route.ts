@@ -70,6 +70,7 @@ async function forward(request: Request, context: Context) {
   const url = new URL(base.toString().replace(/\/$/, "") + "/" + route);
   const query = new URL(request.url).searchParams;
   for (const [key, value] of query) {
+    if(path[0]==="history" && key==="range" && ["1h","24h","7d","30d"].includes(value))continue;
     if (
       path[0] !== "history" ||
       key !== "limit" ||

@@ -5,6 +5,13 @@ const token = "cloud-e2e-test-000000000000000000000000";
 const state = {
   ...liveFixture(),
   bootId: `e2e-${Date.now()}`,
+  system: {
+    ...liveFixture().system,
+    firmwareVersion: "3.0.0 — testovací simulace",
+    ip: "192.168.50.141",
+    wifiRssiDbm: -56,
+    freeHeapBytes: 140000,
+  },
   relays: {
     "1": {
       commandedOn: false,
@@ -78,7 +85,7 @@ async function main() {
       "Content-Type": "application/json",
       Origin: origin,
     },
-    body: JSON.stringify({ password: "cloud-e2e-password-0000" }),
+    body: JSON.stringify({ password: "dashboard-e2e-password-12345" }),
   });
   assert.equal(session.status, 200);
   const cookie = session.headers.get("set-cookie")!.split(";")[0];
@@ -118,6 +125,62 @@ async function main() {
     assert.equal(
       (await fetch(origin + "/api/config").then((r) => r.json())).defaultMode,
       "live",
+    );
+    const houseUrl = origin + "/api/household";
+    assert.equal((await fetch(houseUrl)).status, 401);
+    const privateHeaders = {
+      Cookie: cookie,
+      Origin: origin,
+      "Content-Type": "application/json",
+    };
+    const before = await fetch(houseUrl, { headers: privateHeaders }).then(
+      (r) => r.json(),
+    );
+    const saved = await fetch(houseUrl, {
+      method: "PATCH",
+      headers: privateHeaders,
+      body: JSON.stringify({
+        revision: before.revision,
+        notes: "Večeře je v lednici.",
+        tasks: [{ id: "test-mleko", text: "Koupit mléko", done: false }],
+        shopping: [],
+      }),
+    });
+    assert.equal(saved.status, 200);
+    assert.equal(
+      (
+        await fetch(houseUrl, {
+          method: "PATCH",
+          headers: privateHeaders,
+          body: JSON.stringify({ revision: before.revision, notes: "kolize" }),
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (
+        await fetch(houseUrl, {
+          method: "PATCH",
+          headers: { ...privateHeaders, Origin: "https://evil.test" },
+          body: "{}",
+        })
+      ).status,
+      403,
+    );
+    const imported = await fetch(houseUrl + "/import", {
+      method: "POST",
+      headers: privateHeaders,
+      body: JSON.stringify({
+        importId: state.bootId,
+        notes: "",
+        tasks: [{ id: "test-kvetiny", text: "Zalít květiny", done: true }],
+      }),
+    });
+    assert.equal(imported.status, 200);
+    assert.equal(
+      (await fetch(houseUrl, { headers: privateHeaders }).then((r) => r.json()))
+        .tasks.length,
+      2,
     );
     console.log(
       "Cloud HTTP E2E passed: authenticated ingest, session, both relay ACKs, live default.",

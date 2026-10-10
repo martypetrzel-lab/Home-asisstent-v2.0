@@ -1,5 +1,7 @@
 # ESP32 → Railway → tablet
 
+> Archiv návodu verze 2. Pro nové nasazení použijte [návod Home Assistant 3.0](V3_NASAZENI.md), kompletní firmware v3 a [aktuální výsledky ověření](V3_OVERENI.md).
+
 ESP32 se samo připojuje přes Wi-Fi k internetu a přibližně každé 2 sekundy posílá stav na:
 
 `https://home-asisstent-v20-production.up.railway.app/api/device/sync`

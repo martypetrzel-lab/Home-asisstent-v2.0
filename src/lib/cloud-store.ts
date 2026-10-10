@@ -97,7 +97,7 @@ export class CloudStore {
       }),
     );
     this.db.exec(
-      "DELETE FROM events WHERE id NOT IN (SELECT id FROM events ORDER BY id DESC LIMIT 48)",
+      "DELETE FROM events WHERE id NOT IN (SELECT id FROM events ORDER BY id DESC LIMIT 512)",
     );
   }
   private expire(now: number) {
@@ -237,7 +237,7 @@ export class CloudStore {
             }),
           );
         this.db.exec(
-          "DELETE FROM history WHERE bucket NOT IN (SELECT bucket FROM history ORDER BY bucket DESC LIMIT 288)",
+          "DELETE FROM history WHERE bucket NOT IN (SELECT bucket FROM history ORDER BY bucket DESC LIMIT 8640)",
         );
       }
       if (input.ack !== undefined && input.ack !== null)
@@ -394,14 +394,37 @@ export class CloudStore {
     value.transport = "cloud";
     return value;
   }
-  history(limit: number) {
-    const records = this.db
-      .prepare("SELECT payload FROM history ORDER BY bucket DESC LIMIT ?")
-      .all(limit)
+  history(limit: number, range?: string, now = Date.now()) {
+    const hours =
+      ({ "1h": 1, "24h": 24, "7d": 168, "30d": 720 } as Record<string, number>)[
+        range || "24h"
+      ] || 24;
+    const raw = this.db
+      .prepare(
+        "SELECT payload FROM history WHERE bucket>=? ORDER BY bucket DESC LIMIT 8640",
+      )
+      .all(Math.floor((now - hours * 3600000) / 300000))
       .reverse()
       .map((r) => JSON.parse(String(r.payload)));
+    // Keep both ends of the selected range and preserve real acquisition gaps
+    // when thinning samples. Never draw a continuous line across an outage.
+    const count = Math.min(raw.length, limit);
+    let previous = -1;
+    const records = Array.from({ length: count }, (_, i) => {
+      const index =
+        count === 1
+          ? raw.length - 1
+          : Math.round((i * (raw.length - 1)) / (count - 1));
+      let gapBefore = false;
+      for (let j = Math.max(1, previous + 1); j <= index; j++) {
+        if (raw[j].epochSeconds - raw[j - 1].epochSeconds > 600)
+          gapBefore = true;
+      }
+      previous = index;
+      return { ...raw[index], gapBefore };
+    });
     const events = this.db
-      .prepare("SELECT payload FROM events ORDER BY id DESC LIMIT 48")
+      .prepare("SELECT payload FROM events ORDER BY id DESC LIMIT 512")
       .all()
       .reverse()
       .map((r) => JSON.parse(String(r.payload)));
@@ -409,7 +432,7 @@ export class CloudStore {
       apiVersion: 1,
       records,
       events,
-      capacity: 288,
+      capacity: 8640,
       intervalSeconds: 300,
       clockSource: "device_measurement",
       storage: "railway_volume",
@@ -445,7 +468,9 @@ export class CloudStore {
         if (
           existing.channel !== channel ||
           Boolean(existing.desired) !== body.state ||
-          (body.bootId && existing.boot !== body.bootId)
+          (body.bootId && existing.boot !== body.bootId) ||
+          (body.expectedVersion !== undefined &&
+            existing.version !== body.expectedVersion)
         )
           fail("requestId již patří jinému příkazu.", 409);
         return id;
