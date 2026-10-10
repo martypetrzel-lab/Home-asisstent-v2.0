@@ -34,11 +34,29 @@ export function HistoryChart({
         <span>
           {metric === "battery"
             ? "Měření baterie bude dostupné po instalaci senzoru."
-            : "Připojte zdroj dat nebo zapněte demo režim."}
+            : "Graf se objeví po prvních dostupných měřeních."}
         </span>
       </div>
     );
   const temperature = metric === "temperature";
+  const gappedData = data.flatMap((d, i) =>
+    d.gapBefore && i > 0
+      ? [
+          {
+            timestamp: new Date(
+              (Date.parse(data[i - 1].timestamp) + Date.parse(d.timestamp)) / 2,
+            ).toISOString(),
+            indoorTemperature: null,
+            outdoorTemperature: null,
+            indoorHumidity: null,
+            outdoorHumidity: null,
+            solarPower: null,
+            solarEnergy: null,
+          },
+          d,
+        ]
+      : [d],
+  );
   const dailyData =
     metric === "production"
       ? Array.from(
@@ -51,10 +69,10 @@ export function HistoryChart({
             ]),
           ).values(),
         )
-      : data;
+      : gappedData;
   const chartData =
     temperature && preferences.unit === "fahrenheit"
-      ? data.map((d) => ({
+      ? gappedData.map((d) => ({
           ...d,
           indoorTemperature:
             d.indoorTemperature === null
@@ -170,6 +188,7 @@ export function HistoryChart({
               key={key}
               dataKey={key}
               type="monotone"
+              connectNulls={false}
               stroke={colors[i]}
               fill={`url(#fill-${key}-${compact})`}
               strokeWidth={2}

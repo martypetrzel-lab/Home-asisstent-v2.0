@@ -32,7 +32,7 @@ import { apiRequest, parseHistory, setLiveRelay } from "@/services/esp32";
 import { getWeather, withWeather } from "@/services/weather";
 const defaults: Preferences = {
   ...tabletDefaults,
-  mode: "demo",
+  mode: "live",
   theme: "dark",
   kiosk: false,
   dim: false,
@@ -40,7 +40,7 @@ const defaults: Preferences = {
   unit: "celsius",
   location: "Nehvizdy",
   refresh: 15,
-  endpoint: process.env.NEXT_PUBLIC_ESP32_API_URL || "",
+  endpoint: "",
 };
 const PreferencesContext = createContext<{
   preferences: Preferences;
@@ -66,9 +66,7 @@ export function Providers({ children }: { children: ReactNode }) {
       );
       saved = {
         ...parseTabletPreferences(value),
-        ...(value.mode === "live" || value.mode === "demo"
-          ? { mode: value.mode }
-          : {}),
+        mode: "live",
         theme: value.theme === "light" ? "light" : "dark",
         unit: value.unit === "fahrenheit" ? "fahrenheit" : "celsius",
         kiosk: value.kiosk === true,
@@ -77,10 +75,7 @@ export function Providers({ children }: { children: ReactNode }) {
         location:
           typeof value.location === "string" ? value.location : "Nehvizdy",
         refresh: [5, 15, 30, 60].includes(value.refresh) ? value.refresh : 15,
-        endpoint:
-          typeof value.endpoint === "string"
-            ? value.endpoint
-            : defaults.endpoint,
+        endpoint: "",
       };
     } catch {
       /* Storage may be blocked; the application remains usable. */
@@ -95,8 +90,9 @@ export function Providers({ children }: { children: ReactNode }) {
     })
       .then((r) => r.json())
       .then((config) => {
-        if (active && !saved.mode && config.defaultMode === "live")
-          setPreferences((p) => ({ ...p, mode: "live" }));
+        if (active && config.transport === "cloud") {
+          setPreferences((p) => ({ ...p, mode: "live", endpoint: "" }));
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -106,8 +102,12 @@ export function Providers({ children }: { children: ReactNode }) {
       if (event.key === "home-preferences") {
         try {
           const p = JSON.parse(event.newValue || "{}");
-          if (p.mode === "live" || p.mode === "demo")
-            setPreferences((prev) => ({ ...prev, mode: p.mode }));
+          setPreferences((prev) => ({
+            ...prev,
+            ...parseTabletPreferences(p),
+            mode: "live",
+            endpoint: "",
+          }));
         } catch {}
       }
     };
@@ -123,7 +123,12 @@ export function Providers({ children }: { children: ReactNode }) {
   const update = useCallback(
     (values: Partial<Preferences>) =>
       setPreferences((previous) => {
-        const next = { ...previous, ...values };
+        const next: Preferences = {
+          ...previous,
+          ...values,
+          mode: "live",
+          endpoint: "",
+        };
         try {
           localStorage.setItem("home-preferences", JSON.stringify(next));
         } catch {}
@@ -206,12 +211,17 @@ export function useHome(range: HistoryRange = "24h") {
     retry: false,
   });
   const historyQuery = useQuery({
-    queryKey: ["esp32-history", preferences.endpoint],
+    queryKey: ["esp32-history", preferences.endpoint, range],
     queryFn: async ({ signal }) =>
       parseHistory(
-        await apiRequest(preferences.endpoint, "history", {}, signal),
+        await apiRequest(
+          preferences.endpoint,
+          "history?range=" + range,
+          {},
+          signal,
+        ),
       ),
-    enabled: ready && preferences.mode === "live" && !!query.data,
+    enabled: ready && preferences.mode === "live",
     staleTime: 60000,
     refetchInterval: 60000,
     retry: false,
@@ -278,6 +288,12 @@ export function useHome(range: HistoryRange = "24h") {
     };
   }
   if (preferences.mode === "live")
+    data = {
+      ...data,
+      history: historyQuery.data?.history || [],
+      events: historyQuery.data?.events || [],
+    };
+  if (preferences.mode === "live")
     data = withWeather(
       data,
       weatherQuery.data,
@@ -298,20 +314,27 @@ export function useHome(range: HistoryRange = "24h") {
     mode: preferences.mode,
   };
 }
-export function useRelay() {
+export function useRelay(channel: 1 | 2 = 1) {
   const client = useQueryClient();
   const { preferences } = usePreferences();
   const { data } = useHome();
   return useMutation({
-    mutationKey: ["relay", preferences.mode],
+    mutationKey: ["relay", preferences.mode, channel],
     mutationFn: async (on: boolean) => {
       return preferences.mode === "demo"
         ? setDemoRelay(on)
         : setLiveRelay(
             preferences.endpoint,
             on,
-            data.relay,
+            channel === 1
+              ? data.relay
+              : data.relay2 || {
+                  on: null,
+                  acknowledgedAt: null,
+                  controlAvailable: false,
+                },
             data.device.bootId,
+            channel,
           );
     },
     onSuccess: () => {

@@ -94,7 +94,7 @@ test("weather cache deduplicates, marks old forecast and expires independently o
           ),
         )
       ).status,
-      400,
+      401,
     );
   } finally {
     global.fetch = previous;

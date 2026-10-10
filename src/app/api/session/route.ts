@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return jsonResponse(
       {
         error:
-          "Správce musí nastavit DASHBOARD_PASSWORD a SESSION_SECRET na místním serveru.",
+          "Správce musí nastavit DASHBOARD_PASSWORD a SESSION_SECRET na serveru.",
       },
       503,
     );

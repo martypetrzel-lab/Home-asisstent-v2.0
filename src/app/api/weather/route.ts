@@ -1,7 +1,8 @@
 import { serverWeather } from "@/lib/server-weather";
-import { jsonResponse } from "@/lib/server-auth";
+import { jsonResponse, validSession } from "@/lib/server-auth";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
+  if(!validSession(request))return jsonResponse({error:"Nejprve se přihlaste."},401);
   const params = new URL(request.url).searchParams;
   const location = params.get("location")?.trim() || "Nehvizdy";
   if (

@@ -82,6 +82,7 @@ export interface WeatherHourly {
 }
 export interface HistoryRecord {
   timestamp: string;
+  gapBefore?: boolean;
   indoorTemperature: number | null;
   outdoorTemperature: number | null;
   indoorHumidity: number | null;
@@ -110,6 +111,7 @@ export interface HomeSnapshot {
   powerSource: PowerSource;
   mains: boolean | null;
   relay: RelayStatus;
+  relay2?: RelayStatus;
   weather: WeatherCurrent;
   forecast: WeatherForecast[];
   hourly: WeatherHourly[];

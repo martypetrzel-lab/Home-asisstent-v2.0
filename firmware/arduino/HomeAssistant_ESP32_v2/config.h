@@ -3,9 +3,11 @@
 // Provisional ESP32-WROOM / generic 4 MB esp32dev. Confirm exact board before
 // upload.
 namespace cfg {
-constexpr const char *CloudUrl = "https://home-asisstent-v20-production.up.railway.app/api/device/sync";
-constexpr int IndoorDht = 27, OutdoorDht = 17, Sda = 21, Scl = 22;
-constexpr int Relay = 26, Relay2 = 33, Button = 25, PowerStatus = 32;
+// Original kitchen hardware: outdoor DHT22 remains on GPIO32.
+constexpr int IndoorDht = 27, OutdoorDht = 32, Sda = 21, Scl = 22;
+// Relay 1: light below oven. Relay 2: free spare output.
+// PowerStatus is unused (TpsStatusInstalled=false).
+constexpr int Relay = 26, Relay2 = 33, Button = 25, PowerStatus = 17;
 constexpr uint8_t InaAddress = 0x40;
 // Original v1.8.10 confirms both relay modules ACTIVE LOW. -1 disables outputs.
 constexpr int RelayActiveLevel = 0;
@@ -34,7 +36,7 @@ constexpr const char *Timezone = "CET-1CEST,M3.5.0,M10.5.0/3";
 constexpr const char *Ntp1 =
     "pool.ntp.org"; // May be changed to a local NTP server.
 constexpr const char *Ntp2 = "time.cloudflare.com";
-constexpr const char *FirmwareVersion = "2.2.0";
+constexpr const char *FirmwareVersion = "2.2.0-local-kitchen";
 constexpr bool uniquePins() {
   const int pins[] = {IndoorDht, OutdoorDht, Sda,    Scl,
                       Relay,     Relay2,     Button, PowerStatus};

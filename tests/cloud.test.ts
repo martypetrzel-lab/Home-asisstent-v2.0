@@ -146,3 +146,38 @@ test("repeated push cannot keep a cached device online; ingest authenticates and
     delete process.env.DEVICE_TOKEN;
   }
 });
+
+test("Cloud uchová skutečné vzorky 30 dnů a kontroluje verzi duplicitního povelu", () => {
+  const store = new CloudStore(":memory:"),
+    now = Date.now(),
+    state = liveFixture();
+  for (let i = 0; i < 32; i++) {
+    const t = now - (31 - i) * 86400000;
+    state.timestamp = new Date(t).toISOString();
+    state.uptimeSeconds = i * 86400;
+    store.sync(
+      { protocolVersion: 1, sequence: i + 1, state },
+      state.deviceId,
+      t,
+    );
+  }
+  assert.equal(store.history(288, "30d", now).records.length, 31);
+  assert.equal(store.history(288, "1h", now).records.length, 1);
+  const sampled = store.history(3, "30d", now).records;
+  assert.equal(sampled.length, 3);
+  assert.equal(sampled[0].gapBefore, false);
+  assert.equal(sampled[1].gapBefore, true);
+  assert.equal(sampled[2].epochSeconds, Math.floor(now / 1000));
+  const input = {
+    state: true,
+    requestId: "same-body-required",
+    expectedVersion: 2,
+    bootId: state.bootId,
+  };
+  store.enqueue(1, input, now);
+  assert.throws(
+    () => store.enqueue(1, { ...input, expectedVersion: 3 }, now),
+    /jinému/,
+  );
+  store.close();
+});

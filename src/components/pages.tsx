@@ -1,38 +1,23 @@
 "use client";
 import { useState } from "react";
 import {
-  BatteryMedium,
-  ChartNoAxesCombined,
+  Activity,
+  ArrowUpRight,
   CloudSun,
-  Droplets,
-  Gauge,
-  Info,
-  PlugZap,
   Radio,
-  Sun,
-  Sunrise,
-  Sunset,
-  Thermometer,
   Wind,
-  Zap,
+  Droplets,
+  Sun,
 } from "lucide-react";
-import {
-  BatteryCard,
-  Card,
-  CardHeading,
-  ClimateCard,
-  DeviceCard,
-  EnergyFlowDiagram,
-  LightingControl,
-  PowerSourceIndicator,
-  SolarCard,
-  WeatherCard,
-} from "@/components/dashboard/cards";
+import { useHome, useTemperature } from "@/hooks/use-home";
 import { HistoryChart } from "@/components/charts/history-chart";
 import { ForecastChart } from "@/components/weather/forecast-chart";
-import { useHome, usePreferences, useTemperature } from "@/hooks/use-home";
-import { number, time } from "@/lib/utils";
-import type { HomeSnapshot, HistoryRange } from "@/types";
+import { HouseholdContent } from "@/components/household";
+import { WeatherSymbol } from "@/components/dashboard/tablet-dashboard";
+import { number as formatNumber, time } from "@/lib/utils";
+const number = (value: number | null | undefined, digits = 1) =>
+  value == null ? "—" : formatNumber(value, digits);
+import type { HistoryRange, HomeSnapshot } from "@/types";
 export function PageIntro({
   eyebrow,
   title,
@@ -43,15 +28,15 @@ export function PageIntro({
   description: string;
 }) {
   return (
-    <div className="section-intro">
+    <div className="page-heading">
       <div>
         <span className="eyebrow">{eyebrow}</span>
         <h1>
           {title}
           <span className="title-dot">.</span>
         </h1>
-        <p>{description}</p>
       </div>
+      <span className="heading-note">{description}</span>
     </div>
   );
 }
@@ -60,16 +45,16 @@ export function RangeFilter({
   onChange,
 }: {
   value: HistoryRange;
-  onChange: (range: HistoryRange) => void;
+  onChange: (value: HistoryRange) => void;
 }) {
   return (
     <div className="range-filter" aria-label="Období historie">
-      {(["1h", "24h", "7d", "30d"] as const).map((range, i) => (
+      {(["1h", "24h", "7d", "30d"] as const).map((r, i) => (
         <button
-          key={range}
-          aria-pressed={value === range}
-          className={range === value ? "active" : ""}
-          onClick={() => onChange(range)}
+          key={r}
+          aria-pressed={value === r}
+          className={value === r ? "active" : ""}
+          onClick={() => onChange(r)}
         >
           {["1 hodina", "24 hodin", "7 dní", "30 dní"][i]}
         </button>
@@ -84,463 +69,286 @@ function Events({
   events: HomeSnapshot["events"];
   error?: Error | null;
 }) {
-  if (error)
-    return (
-      <p role="alert" className="note">
-        Historii se nepodařilo načíst: {error.message}
-      </p>
-    );
-  if (!events?.length)
-    return (
-      <p className="prose">
-        Zatím bez zaznamenaných událostí. Sledování zdrojů vyžaduje zapojený a
-        ověřený TPS2116.
-      </p>
-    );
   return (
-    <div>
-      {events
-        .slice(-12)
-        .reverse()
-        .map((event, i) => (
-          <div className="metric-row" key={i}>
-            <span>{event.detail || event.kind}</span>
-            <small>
-              {event.timestamp
-                ? new Date(event.timestamp).toLocaleString("cs-CZ", {
-                    timeZone: "Europe/Prague",
-                  })
-                : `Po startu ${event.uptime} s · bez času`}
-            </small>
-          </div>
-        ))}
+    <div className="event-list">
+      {error ? (
+        <p className="error-text">{error.message}</p>
+      ) : events?.length ? (
+        events
+          .slice(-30)
+          .reverse()
+          .map((e, i) => (
+            <div key={i}>
+              <span className="event-dot" />
+              <p>
+                {e.detail || e.kind}
+                <small>
+                  {e.timestamp
+                    ? new Date(e.timestamp).toLocaleString("cs-CZ", {
+                        timeZone: "Europe/Prague",
+                      })
+                    : `Po startu ${e.uptime} s · čas nesynchronizován`}
+                </small>
+              </p>
+              <ArrowUpRight size={15} />
+            </div>
+          ))
+      ) : (
+        <div className="empty-events">
+          <Radio size={25} />
+          <p>Zatím žádné události.</p>
+          <small>Potvrzené změny relé se objeví zde.</small>
+        </div>
+      )}
     </div>
   );
 }
 export function HouseholdPage() {
-  const { data } = useHome();
-  const temp = useTemperature();
-  const { preferences } = usePreferences();
-  const delta =
-    data.indoor.temperature !== null && data.outdoor.temperature !== null
-      ? data.indoor.temperature - data.outdoor.temperature
-      : null;
-  const indoorValues = data.history
-    .map((d) => d.indoorTemperature)
-    .filter((v): v is number => v !== null);
-  const outdoorValues = data.history
-    .map((d) => d.outdoorTemperature)
-    .filter((v): v is number => v !== null);
-  const minimum = indoorValues.length ? Math.min(...indoorValues) : null;
-  const maximum = indoorValues.length ? Math.max(...indoorValues) : null;
   return (
-    <>
+    <div className="tab-page">
       <PageIntro
-        eyebrow="PROSTOR PRO POHODU"
-        title="Vaše domácnost"
-        description="Klima uvnitř i venku a světlo přesně podle vás."
+        eyebrow="KAŽDODENNÍ MALÉ RITUÁLY"
+        title="Všechno má své místo"
+        description="Společný prostor pro celou domácnost"
       />
-      <div className="detail-grid">
-        <ClimateCard data={data} />
-        <ClimateCard data={data} outdoor />
-        <Card>
-          <CardHeading
-            icon={<Thermometer size={19} />}
-            title="Srovnání klimatu"
-          />
-          <div className="metric-row">
-            <span>Uvnitř oproti venku</span>
-            <strong>
-              {delta === null
-                ? "Nedostupné"
-                : `${number(preferences.unit === "fahrenheit" ? delta * 1.8 : delta)} °${preferences.unit === "fahrenheit" ? "F" : "C"}`}
-            </strong>
-          </div>
-          <div className="metric-row">
-            <span>Rozdíl vlhkosti</span>
-            <strong>
-              {data.indoor.humidity !== null && data.outdoor.humidity !== null
-                ? `${number(data.indoor.humidity - data.outdoor.humidity)} p. b.`
-                : "Nedostupné"}
-            </strong>
-          </div>
-          <div className="metric-row">
-            <span>Minimum uvnitř · 24 h</span>
-            <strong>{temp(minimum)}</strong>
-          </div>
-          <div className="metric-row">
-            <span>Maximum uvnitř · 24 h</span>
-            <strong>{temp(maximum)}</strong>
-          </div>
-          <div className="metric-row">
-            <span>Minimum venku · 24 h</span>
-            <strong>
-              {temp(outdoorValues.length ? Math.min(...outdoorValues) : null)}
-            </strong>
-          </div>
-          <div className="metric-row">
-            <span>Maximum venku · 24 h</span>
-            <strong>
-              {temp(outdoorValues.length ? Math.max(...outdoorValues) : null)}
-            </strong>
-          </div>
-        </Card>
-        <Card className="span-2">
-          <CardHeading
-            icon={<Thermometer size={19} />}
-            title="Historie teploty"
-          />
-          <HistoryChart data={data.history} />
-        </Card>
-        <LightingControl />
-        <Card className="span-2">
-          <CardHeading
-            icon={<Droplets size={19} />}
-            title="Historie vlhkosti"
-          />
-          <HistoryChart data={data.history} metric="humidity" />
-        </Card>
-        <DeviceCard data={data} />
-      </div>
-    </>
-  );
-}
-export function WeatherPage() {
-  const { data, mode, weatherError } = useHome();
-  const { preferences } = usePreferences();
-  const temp = useTemperature();
-  return (
-    <>
-      <PageIntro
-        eyebrow="POHLED ZA OKNO"
-        title="Počasí"
-        description={`${preferences.location} · Internetová předpověď oddělená od vašeho venkovního senzoru.`}
-      />
-      <div className="info-banner">
-        <Info size={19} />
-        {mode === "demo"
-          ? "Předpověď je simulovaná. V živém režimu ji dodává Open-Meteo."
-          : weatherError
-            ? "Předpověď se nepodařilo obnovit. Lokální měření a světlo fungují samostatně."
-            : "Open-Meteo: internetová předpověď. Venkovní DHT22 měří lokální teplotu a vlhkost."}
-      </div>
-      <div className="detail-grid">
-        <WeatherCard data={data} />
-        <p className="note span-2">
-          Zdroj:{" "}
-          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-            Open-Meteo
-          </a>{" "}
-          · internetová modelová předpověď.{" "}
-          {data.weather.fetchedAt
-            ? `Obnoveno ${time(data.weather.fetchedAt)}. `
-            : ""}
-          {data.weather.stale
-            ? "Zobrazená předpověď je starší; obnova selhala."
-            : ""}{" "}
-          Keš se obnovuje po 10 minutách, při výpadku nejvýše hodinu.
-        </p>
-        <Card className="span-2">
-          <CardHeading
-            icon={<CloudSun size={19} />}
-            title="Hodinová předpověď"
-            detail={
-              <span className="sensor-tag">
-                {mode === "demo"
-                  ? "Simulace"
-                  : data.weather.stale
-                    ? "Starší předpověď"
-                    : "Open-Meteo"}
-              </span>
-            }
-          />
-          {data.hourly.length ? (
-            <>
-              <div className="hourly-forecast">
-                {data.hourly.slice(0, 8).map((hour) => (
-                  <div key={hour.timestamp}>
-                    <small>{time(hour.timestamp)}</small>
-                    {hour.condition === "sunny" ? (
-                      <Sun size={26} />
-                    ) : (
-                      <CloudSun size={26} />
-                    )}
-                    <strong>{temp(hour.temperature)}</strong>
-                    <span>
-                      <Droplets size={12} />
-                      {hour.rain} %
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <ForecastChart data={data.hourly} />
-            </>
-          ) : (
-            <div className="empty-chart">
-              Hodinová předpověď není k dispozici.
-            </div>
-          )}
-        </Card>
-        <Card className="span-2">
-          <CardHeading
-            icon={<CloudSun size={19} />}
-            title="Výhled na sedm dní"
-          />
-          {data.forecast.length ? (
-            <div className="forecast-table">
-              {data.forecast.map((day, i) => (
-                <div key={day.date}>
-                  <strong>
-                    {i === 0
-                      ? "Dnes"
-                      : new Date(day.date).toLocaleDateString("cs-CZ", {
-                          weekday: "long",
-                        })}
-                  </strong>
-                  {day.condition === "rain" ? (
-                    <Droplets size={20} />
-                  ) : day.condition === "sunny" ? (
-                    <Sun size={20} />
-                  ) : (
-                    <CloudSun size={20} />
-                  )}
-                  <span>
-                    {day.condition === "rain"
-                      ? "Déšť"
-                      : day.condition === "sunny"
-                        ? "Jasno"
-                        : "Polojasno"}
-                  </span>
-                  <span>{day.rain} %</span>
-                  <span className="muted">{temp(day.min)}</span>
-                  <strong>{temp(day.max)}</strong>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-chart">
-              Sedmidenní předpověď není k dispozici.
-            </div>
-          )}
-        </Card>
-        <Card>
-          <CardHeading icon={<Wind size={19} />} title="Podrobnosti počasí" />
-          {[
-            [Wind, "Vítr", data.weather.wind, "km/h"],
-            [Wind, "Nárazy větru", data.weather.gusts, "km/h"],
-            [Gauge, "Tlak", data.weather.pressure, "hPa"],
-            [
-              Droplets,
-              "Vlhkost podle předpovědi",
-              data.weather.humidity ?? null,
-              "%",
-            ],
-            [CloudSun, "Oblačnost", data.weather.cloudCover ?? null, "%"],
-            [Droplets, "Srážky", data.weather.precipitationMm ?? null, "mm"],
-            [Sunrise, "Východ slunce", data.weather.sunrise, ""],
-            [Sunset, "Západ slunce", data.weather.sunset, ""],
-          ].map(([, label, value, unit]) => (
-            <div className="metric-row" key={String(label)}>
-              <span>{String(label)}</span>
-              <strong>
-                {value === null
-                  ? "Nedostupné"
-                  : `${typeof value === "number" ? number(value, 0) : value} ${unit}`}
-              </strong>
-            </div>
-          ))}
-        </Card>
-        <ClimateCard data={data} outdoor />
-        <Card className="span-2">
-          <CardHeading icon={<Info size={19} />} title="Dva nezávislé zdroje" />
-          <p className="prose">
-            Venkovní senzor DHT22 poskytuje lokální teplotu a vlhkost u vašeho
-            domu. Internetovou předpověď poskytuje Open-Meteo pro zvolené místo.
-            Déšť, vítr ani tlak z DHT22 neodvozujeme.
-          </p>
-        </Card>
-      </div>
-    </>
+      <HouseholdContent />
+    </div>
   );
 }
 export function EnergyPage() {
-  const [range, setRange] = useState<HistoryRange>("24h");
-  const { data, mode, historyError } = useHome(range);
+  const [range, setRange] = useState<HistoryRange>("24h"),
+    { data, historyError, lastSuccessfulUpdate } = useHome(range),
+    s = data.solar;
   return (
-    <>
+    <div className="tab-page">
       <PageIntro
-        eyebrow="KAŽDÝ WATT MÁ SVŮJ PŘÍBĚH"
-        title="Energie v rovnováze"
-        description="Solární výroba dnes. Připraveno na hybridní napájení zítra."
+        eyebrow="ENERGIE V SOUVISLOSTECH"
+        title="Každý watt se počítá"
+        description="Živé měření INA219"
       />
-      <div className="detail-grid">
-        <SolarCard data={data} />
-        {mode === "live" && (
-          <Card>
-            <CardHeading
-              icon={<Info size={19} />}
-              title="Místo solárního měření"
-            />
-            <p className="prose">
-              {data.solar.location || "Místo nebylo ověřeno."}
-            </p>
-            <p className="note">
-              {data.solar.directionConfirmed
-                ? "Směr měření je v konfiguraci potvrzen. Denní energie může být neúplná."
-                : "Směr proudu není potvrzen; denní Wh se nevypočítávají."}{" "}
-              Napětí INA není automaticky napětím panelu naprázdno.
-            </p>
-            {[
-              [
-                "Celkem od instalace · měřené úseky",
-                data.solar.totalEnergy,
-                "Wh",
-              ],
-              ["Min. výkon od restartu", data.solar.minimum, "W"],
-              ["Max. výkon od restartu", data.solar.maximum, "W"],
-              ["Surový proud INA", data.solar.rawCurrentMa, "mA"],
-            ].map(([label, value, unit]) => (
-              <div className="metric-row" key={String(label)}>
-                <span>{String(label)}</span>
-                <strong>
-                  {typeof value === "number"
-                    ? `${number(value, 2)} ${unit}`
-                    : "Nedostupné"}
-                </strong>
-              </div>
-            ))}
-            <p className="note">
-              Součet je podepsaná energie platných měřených úseků, nikoli odhad
-              celoživotní výroby.
-            </p>
-          </Card>
-        )}
-        <BatteryCard data={data} />
-        <Card>
-          <CardHeading icon={<PlugZap size={19} />} title="Napájení systému" />
-          <div className="source-large">
-            <PowerSourceIndicator data={data} />
+      <div className="energy-layout">
+        <section className="energy-main panel">
+          <div className="panel-heading">
+            <span className="eyebrow">AKTUÁLNÍ VÝKON</span>
+            <Sun size={22} />
           </div>
-          <div className="metric-row">
-            <span>Síťový adaptér</span>
+          <div className="power-reading">
+            {number(s.power)}
+            <span>W</span>
+          </div>
+          <p className="energy-subtitle">Měřená větev · INA219</p>
+          <svg
+            className="energy-lines"
+            viewBox="0 0 500 90"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M0 60H160L184 28L210 75L241 10L270 62H500"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M0 73H155L185 42L210 84L242 34L271 74H500"
+              stroke="currentColor"
+              strokeOpacity=".2"
+            />
+          </svg>
+          <div className="electrical-readings">
+            <div>
+              <span>Napětí</span>
+              <strong>
+                {number(s.voltage, 2)} <small>V</small>
+              </strong>
+            </div>
+            <div>
+              <span>Proud se znaménkem</span>
+              <strong>
+                {number(s.current, 3)} <small>A</small>
+              </strong>
+            </div>
+          </div>
+          <div className="energy-validity">
+            <Activity size={15} />
+            <span>
+              {s.power == null ? "Měření není dostupné" : "Aktuální měření"}
+              <small>
+                {lastSuccessfulUpdate
+                  ? `Poslední aktualizace ${time(lastSuccessfulUpdate)}`
+                  : "Čekáme na zařízení"}
+              </small>
+            </span>
+          </div>
+        </section>
+        <section className="energy-chart panel">
+          <div className="panel-heading">
+            <h2>Průběh výkonu</h2>
+            <RangeFilter value={range} onChange={setRange} />
+          </div>
+          <HistoryChart data={data.history} metric="solar" range={range} />
+          <p className="note">
+            {historyError
+              ? historyError.message
+              : "Graf obsahuje pouze dostupná měření. Mezery znamenají chybějící data."}
+          </p>
+        </section>
+        <section className="energy-totals panel">
+          <div>
+            <span className="eyebrow">DNES</span>
             <strong>
-              {data.mains === null
-                ? "Nedostupné"
-                : data.mains
-                  ? "Dostupný · simulace"
-                  : "Nedostupný"}
+              {number(s.dailyEnergy)} <small>Wh</small>
             </strong>
           </div>
-          <div className="metric-row">
-            <span>Spotřeba ESP32</span>
-            <strong>Nedostupné</strong>
+          <div>
+            <span className="eyebrow">CELKEM SLEDOVÁNO</span>
+            <strong>
+              {number(s.totalEnergy ?? null)} <small>Wh</small>
+            </strong>
           </div>
-          <p className="note">
-            Spotřeba není měřena ani odhadována. Zdroj určuje pouze ověřené
-            zapojení ST; dostupnost adaptéru se samostatně neměří.
+          <p className={s.directionConfirmed ? "note" : "validation-note"}>
+            {s.directionConfirmed
+              ? s.energyPartial
+                ? "Energie může být neúplná kvůli výpadkům měření."
+                : "Směr proudu je potvrzený."
+              : "Směr INA219 není potvrzen. Odvozená energie je neověřená."}
           </p>
-        </Card>
-        <div className="span-3">
-          <EnergyFlowDiagram />
-        </div>
-        <Card className="span-2">
-          <CardHeading
-            icon={<ChartNoAxesCombined size={19} />}
-            title="Solární výroba"
-            detail={
-              <span className="sensor-tag">
-                {mode === "demo" ? "Simulace" : "Měření"}
-              </span>
-            }
-          />
-          <RangeFilter value={range} onChange={setRange} />
-          <HistoryChart
-            data={data.history}
-            metric={range === "7d" || range === "30d" ? "production" : "solar"}
-            range={range}
-          />
-        </Card>
-        <Card>
-          <CardHeading
-            icon={<BatteryMedium size={19} />}
-            title="Přepínání zdrojů"
-          />
-          <Events
-            events={data.events?.filter((e) => e.kind === "power")}
-            error={historyError}
-          />
-        </Card>
+        </section>
+        <section className="energy-meta panel">
+          <span className="eyebrow">KVALITA MĚŘENÍ</span>
+          <p>
+            {s.power == null
+              ? "Senzor se zatím neozval."
+              : s.directionConfirmed
+                ? "Měření je dostupné a směr ověřený."
+                : "Záporný proud zachováváme tak, jak jej senzor naměřil."}
+          </p>
+          <span className="note">Chybějící hodnoty se nedopočítávají.</span>
+        </section>
       </div>
-    </>
+    </div>
   );
 }
 export function HistoryPage() {
-  const [range, setRange] = useState<HistoryRange>("24h");
-  const [metric, setMetric] = useState<
-    "temperature" | "humidity" | "solar" | "production" | "battery"
-  >("temperature");
-  const { data, mode, historyError } = useHome(range);
+  const [range, setRange] = useState<HistoryRange>("24h"),
+    [metric, setMetric] = useState<
+      "temperature" | "humidity" | "solar" | "production"
+    >("temperature"),
+    { data, historyError, mode } = useHome(range);
   return (
-    <>
+    <div className="tab-page">
       <PageIntro
-        eyebrow="SOUVISLOSTI V ČASE"
-        title="Historie měření"
-        description="Podívejte se, jak váš domov dýchá a jak slunce vyrábí energii."
+        eyebrow="PŘÍBĚH VAŠEHO DOMOVA"
+        title="Ohlédnutí v čase"
+        description="Měření, která dávají souvislosti"
       />
-      <Card>
-        <div className="history-toolbar">
-          <label>
-            Co zobrazit
-            <select
-              value={metric}
-              onChange={(e) => setMetric(e.target.value as typeof metric)}
-            >
-              <option value="temperature">Vnitřní a venkovní teplota</option>
-              <option value="humidity">Vnitřní a venkovní vlhkost</option>
-              <option value="solar">Výkon solárního panelu</option>
-              <option value="production">Denní solární výroba</option>
-              <option value="battery">Napětí baterie · budoucí</option>
-            </select>
-          </label>
-          <RangeFilter value={range} onChange={setRange} />
-        </div>
-        <div className="history-title">
-          <h2>
-            {
+      <div className="history-layout">
+        <section className="history-panel panel">
+          <div className="history-toolbar">
+            <div className="metric-tabs">
+              {(
+                ["temperature", "humidity", "solar", "production"] as const
+              ).map((m, i) => (
+                <button
+                  key={m}
+                  onClick={() => setMetric(m)}
+                  className={m === metric ? "active" : ""}
+                >
+                  {["Teplota", "Vlhkost", "Výkon", "Energie"][i]}
+                </button>
+              ))}
+            </div>
+            <RangeFilter value={range} onChange={setRange} />
+          </div>
+          <div className="history-chart-heading">
+            <h2>
               {
-                temperature: "Teplota",
-                humidity: "Vlhkost",
-                solar: "Solární výkon",
-                production: "Denní výroba",
-                battery: "Napětí baterie",
-              }[metric]
-            }
-          </h2>
-          <span className="sensor-tag">
-            {mode === "demo" ? "Simulovaná data" : "Živá data"}
-          </span>
-        </div>
-        <HistoryChart data={data.history} metric={metric} range={range} />
-        <p className="note">
-          {mode === "demo"
-            ? "Demo historie slouží k vyzkoušení grafů. Nejde o skutečná měření ani vypočtenou výrobu."
-            : "ESP32 uchovává nejvýše 288 vzorků po 5 minutách (24 h). Časy bez synchronizace se neumisťují do časového grafu. Výpadek napájení může ztratit posledních 30 minut; denní energie může být neúplná."}
-        </p>
-      </Card>
-      <div className="two-columns">
-        <Card>
-          <CardHeading icon={<Radio size={19} />} title="Dostupnost historie" />
-          <p className="prose">
-            Přehled teploty, vlhkosti a solárního výkonu podporuje období od
-            jedné hodiny po třicet dní. Živý firmware zatím uchovává posledních
-            24 hodin; delší filtr nevytváří chybějící data.
+                {
+                  temperature: "Teplota doma a venku",
+                  humidity: "Vlhkost doma a venku",
+                  solar: "Solární výkon",
+                  production: "Denní naměřená energie",
+                }[metric]
+              }
+            </h2>
+            <span className="small-tag">
+              {mode === "demo" ? "SIMULACE" : "SKUTEČNÁ MĚŘENÍ"}
+            </span>
+          </div>
+          <HistoryChart data={data.history} metric={metric} range={range} />
+          <p className="note">
+            {metric === "production" && !data.solar.directionConfirmed
+              ? "Odvozená energie je neověřená, dokud není potvrzen směr INA219. "
+              : ""}
+            Chybějící měření se nedoplňují. Časy v zóně Europe/Prague.
           </p>
-        </Card>
-        <Card>
-          <CardHeading icon={<Zap size={19} />} title="Události zařízení" />
+          {historyError && <p className="error-text">{historyError.message}</p>}
+        </section>
+        <section className="events-panel panel">
+          <div className="panel-heading">
+            <h2>Události domova</h2>
+            <Radio size={18} />
+          </div>
           <Events events={data.events} error={historyError} />
-        </Card>
+        </section>
       </div>
-    </>
+    </div>
+  );
+}
+export function WeatherPage() {
+  const { data } = useHome(),
+    temp = useTemperature();
+  return (
+    <div className="tab-page">
+      <PageIntro
+        eyebrow="ZA OKNY VAŠEHO DOMOVA"
+        title={data.weather.location || "Nehvizdy"}
+        description="Internetová předpověď · Open-Meteo"
+      />
+      <div className="weather-detail-layout">
+        <section className="panel weather-detail">
+          <CloudSun size={24} />
+          <strong>
+            {data.weather.temperature == null
+              ? "—"
+              : temp(data.weather.temperature)}
+          </strong>
+          <h2>{data.weather.description || "Počasí není dostupné"}</h2>
+          <p>Pocitově {temp(data.weather.feelsLike)}</p>
+          <div>
+            <Wind size={16} />
+            {number(data.weather.wind)} km/h <Droplets size={16} />
+            {number(data.weather.rain)} %
+          </div>
+          <p className="note">
+            {data.weather.stale
+              ? "Zobrazuje se starší předpověď."
+              : "Předpověď a vlastní venkovní senzor jsou nezávislé zdroje."}
+          </p>
+        </section>
+        <section className="panel weather-hourly">
+          <h2>V průběhu dne</h2>
+          <ForecastChart data={data.hourly} />
+        </section>
+        <section className="forecast-band weather-week">
+          <div className="seven-days">
+            {data.forecast.slice(0, 7).map((d) => (
+              <div className="forecast-day" key={d.date}>
+                <span>
+                  {new Date(d.date).toLocaleDateString("cs-CZ", {
+                    weekday: "short",
+                    timeZone: "Europe/Prague",
+                  })}
+                </span>
+                <WeatherSymbol condition={d.condition} />
+                <strong>
+                  {temp(d.max)} <small>{temp(d.min)}</small>
+                </strong>
+                <small>{d.rain} %</small>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

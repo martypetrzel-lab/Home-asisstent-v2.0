@@ -1,6 +1,7 @@
 import type { HomeSnapshot, HistoryRecord, RelayStatus } from "@/types";
 import { emptySnapshot } from "./snapshot";
 import { validateEndpoint } from "@/lib/endpoint";
+import { relayRequestId } from "@/lib/relay-request-id";
 export const object = (v: unknown): Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v)
     ? (v as Record<string, unknown>)
@@ -51,6 +52,8 @@ export async function apiRequest(
     throw new Esp32Error("API neposlalo platná data JSON.", response.status);
   }
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined")
+      window.dispatchEvent(new Event("home-session-expired"));
     const error = object(object(value).error);
     throw new Esp32Error(
       text(error.message) || `API odpovědělo chybou ${response.status}.`,
@@ -162,6 +165,8 @@ export function parseLiveSnapshot(value: unknown): HomeSnapshot {
   result.relay = parseRelay(
     object(root.relays)["1"] || object(root.lighting).kitchenLed,
   );
+  if (object(root.relays)["2"])
+    result.relay2 = parseRelay(object(root.relays)["2"]);
   result.powerSource =
     power.statusInstalled === true
       ? power.activeSource === "MAINS"
@@ -203,6 +208,7 @@ export function parseHistory(value: unknown) {
     return [
       {
         timestamp: new Date(epoch * 1000).toISOString(),
+        gapBefore: r.gapBefore === true,
         indoorTemperature: finite(r.indoorTemperature, -40, 80),
         outdoorTemperature: finite(r.outdoorTemperature, -40, 80),
         indoorHumidity: finite(r.indoorHumidity, 0, 100),
@@ -230,6 +236,7 @@ export async function setLiveRelay(
   on: boolean,
   current: RelayStatus,
   bootId: string | undefined,
+  channel: 1 | 2 = 1,
 ): Promise<RelayStatus> {
   if (apiBase(endpoint) !== "/api/esp32")
     throw new Esp32Error(
@@ -246,10 +253,10 @@ export async function setLiveRelay(
       "Relé není připraveno. Ověřte polaritu a aktuální spojení.",
     );
   commanding = true;
-  const requestId = crypto.randomUUID();
+  const requestId = relayRequestId();
   try {
     const root = object(
-      await apiRequest(endpoint, "relays/1", {
+      await apiRequest(endpoint, `relays/${channel}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -263,7 +270,7 @@ export async function setLiveRelay(
     if (
       root.apiVersion !== 1 ||
       root.applied !== true ||
-      root.channel !== 1 ||
+      root.channel !== channel ||
       root.requestId !== requestId ||
       root.bootId !== bootId ||
       root.requestedState !== on
@@ -272,7 +279,8 @@ export async function setLiveRelay(
         "ESP32 nepotvrdilo tento příkaz GPIO. Obnovte stav.",
       );
     const relay = parseRelay(
-      object(root.relays)["1"] || object(root.lighting).kitchenLed,
+      object(root.relays)[String(channel)] ||
+        (channel === 1 ? object(root.lighting).kitchenLed : null),
     );
     if (relay.on !== on || relay.version !== root.appliedVersion)
       throw new Esp32Error(
