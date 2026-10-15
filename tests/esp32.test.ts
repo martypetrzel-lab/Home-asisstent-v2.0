@@ -52,11 +52,12 @@ test("v1 relays take precedence over compatibility alias and solar totals preser
     ...f,
     relays: {
       "1": { ...f.lighting.kitchenLed, commandedOn: true, version: 9 },
-      "2": { commandedOn: false },
+      "2": { ...f.lighting.kitchenLed, commandedOn: false },
     },
   });
   assert.equal(data.relay.on, true);
   assert.equal(data.relay.version, 9);
+  assert.equal(data.relay2?.on,false);
   assert.equal(data.solar.totalEnergy, 123.4);
   assert.equal(data.solar.minimum, -0.2);
   assert.equal(data.solar.rawCurrentMa, 400);

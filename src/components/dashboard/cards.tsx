@@ -9,6 +9,7 @@ import {
   CloudSun,
   CloudRain,
   Droplets,
+  Gauge,
   House,
   Lightbulb,
   LoaderCircle,
@@ -122,16 +123,15 @@ export function ClimateCard({
   const comfortable =
     climate.temperature !== null &&
     climate.temperature >= 20 &&
-    climate.temperature <= 24 &&
-    climate.humidity !== null &&
-    climate.humidity >= 30 &&
-    climate.humidity <= 60;
+    climate.temperature <= 24;
   return (
     <Card className="climate-card">
       <CardHeading
         icon={outdoor ? <Trees size={19} /> : <House size={19} />}
         title={outdoor ? "Venkovní klima" : "Vnitřní klima"}
-        detail={<span className="sensor-tag">DHT22</span>}
+        detail={
+          <span className="sensor-tag">{outdoor ? "DHT22" : "BMP280"}</span>
+        }
       />
       {climate.temperature === null ? (
         <SensorUnavailableState />
@@ -143,11 +143,13 @@ export function ClimateCard({
           </div>
           <div className="climate-bottom">
             <span>
-              <Droplets size={15} />
-              {climate.humidity === null
+              {outdoor ? <Droplets size={15} /> : <Gauge size={15} />}
+              {(outdoor ? climate.humidity : climate.pressure) == null
                 ? "Nedostupné"
-                : `${number(climate.humidity, 0)} %`}{" "}
-              <small>vlhkost</small>
+                : outdoor
+                  ? `${number(climate.humidity, 0)} %`
+                  : `${number(climate.pressure, 1)} hPa`}{" "}
+              <small>{outdoor ? "vlhkost" : "tlak"}</small>
             </span>
             <span
               className={
@@ -164,7 +166,7 @@ export function ClimateCard({
                   ? "Trend nedostupný"
                   : `${number(preferences.unit === "fahrenheit" ? data.outdoor.trend * 1.8 : data.outdoor.trend)} °${preferences.unit === "fahrenheit" ? "F" : "C"}`
                 : comfortable
-                  ? "Příjemné klima"
+                  ? "Příjemná teplota"
                   : "Mimo komfort"}
             </span>
           </div>
@@ -221,7 +223,7 @@ export function LightingControl() {
           <Lightbulb size={32} strokeWidth={1.4} />
         </div>
         <div>
-          <h3>LED osvětlení nad troubou</h3>
+          <h3>Světlo pod troubou</h3>
           <p>Kuchyňské světlo</p>
           <span className={on ? "healthy" : "muted"}>
             {pending
@@ -514,9 +516,9 @@ export function DeviceCard({ data }: { data: HomeSnapshot }) {
           <Radio size={25} />
         </div>
         <div>
-          <h3>ESP32-WROOM</h3>
+          <h3>ESP32-WROOM-DA</h3>
           <p>
-            2× DHT22 <span>·</span> INA219 <span>·</span> 1× relé
+            BMP280 + DHT22 <span>·</span> INA219 <span>·</span> 2× relé
           </p>
         </div>
         <Link

@@ -8,6 +8,8 @@ export interface DeviceStatus {
   bootId?: string;
 }
 export interface IndoorClimate {
+  pressure?: number | null;
+  sensorModel?: string;
   temperature: number | null;
   humidity: number | null;
   ageMs?: number | null;
@@ -82,8 +84,11 @@ export interface WeatherHourly {
 }
 export interface HistoryRecord {
   timestamp: string;
+  gapBefore?: boolean;
   indoorTemperature: number | null;
   outdoorTemperature: number | null;
+  indoorPressure?: number | null;
+  outdoorPressure?: number | null;
   indoorHumidity: number | null;
   outdoorHumidity: number | null;
   solarPower: number | null;
@@ -110,6 +115,7 @@ export interface HomeSnapshot {
   powerSource: PowerSource;
   mains: boolean | null;
   relay: RelayStatus;
+  relay2?: RelayStatus;
   weather: WeatherCurrent;
   forecast: WeatherForecast[];
   hourly: WeatherHourly[];

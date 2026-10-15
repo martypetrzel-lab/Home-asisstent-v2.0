@@ -1,6 +1,7 @@
 import type { HomeSnapshot, HistoryRecord, RelayStatus } from "@/types";
 import { emptySnapshot } from "./snapshot";
 import { validateEndpoint } from "@/lib/endpoint";
+import { relayRequestId } from "@/lib/relay-request-id";
 export const object = (v: unknown): Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v)
     ? (v as Record<string, unknown>)
@@ -51,6 +52,8 @@ export async function apiRequest(
     throw new Esp32Error("API neposlalo platná data JSON.", response.status);
   }
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined")
+      window.dispatchEvent(new Event("home-session-expired"));
     const error = object(object(value).error);
     throw new Esp32Error(
       text(error.message) || `API odpovědělo chybou ${response.status}.`,
@@ -68,12 +71,14 @@ function climate(value: unknown) {
     age !== null &&
     age <= 15000;
   return {
-    temperature: available ? finite(raw.temperatureC, -40, 80) : null,
+    temperature: available ? finite(raw.temperatureC, -40, 85) : null,
     humidity: available ? finite(raw.humidityPct, 0, 100) : null,
+    pressure: available ? finite(raw.pressureHpa, 300, 1100) : null,
+    sensorModel: text(raw.sensorModel) || undefined,
     ageMs: age,
     available,
-    minimum: finite(raw.minTemperatureC, -40, 80),
-    maximum: finite(raw.maxTemperatureC, -40, 80),
+    minimum: finite(raw.minTemperatureC, -40, 85),
+    maximum: finite(raw.maxTemperatureC, -40, 85),
   };
 }
 export function parseRelay(value: unknown): RelayStatus {
@@ -162,6 +167,8 @@ export function parseLiveSnapshot(value: unknown): HomeSnapshot {
   result.relay = parseRelay(
     object(root.relays)["1"] || object(root.lighting).kitchenLed,
   );
+  if (object(root.relays)["2"])
+    result.relay2 = parseRelay(object(root.relays)["2"]);
   result.powerSource =
     power.statusInstalled === true
       ? power.activeSource === "MAINS"
@@ -203,8 +210,11 @@ export function parseHistory(value: unknown) {
     return [
       {
         timestamp: new Date(epoch * 1000).toISOString(),
-        indoorTemperature: finite(r.indoorTemperature, -40, 80),
-        outdoorTemperature: finite(r.outdoorTemperature, -40, 80),
+        gapBefore: r.gapBefore === true,
+        indoorTemperature: finite(r.indoorTemperature, -40, 85),
+        outdoorTemperature: finite(r.outdoorTemperature, -40, 85),
+        indoorPressure: finite(r.indoorPressure, 300, 1100),
+        outdoorPressure: finite(r.outdoorPressure, 300, 1100),
         indoorHumidity: finite(r.indoorHumidity, 0, 100),
         outdoorHumidity: finite(r.outdoorHumidity, 0, 100),
         solarPower: finite(r.solarPower, -100, 100),
@@ -230,6 +240,7 @@ export async function setLiveRelay(
   on: boolean,
   current: RelayStatus,
   bootId: string | undefined,
+  channel: 1 | 2 = 1,
 ): Promise<RelayStatus> {
   if (apiBase(endpoint) !== "/api/esp32")
     throw new Esp32Error(
@@ -246,10 +257,10 @@ export async function setLiveRelay(
       "Relé není připraveno. Ověřte polaritu a aktuální spojení.",
     );
   commanding = true;
-  const requestId = crypto.randomUUID();
+  const requestId = relayRequestId();
   try {
     const root = object(
-      await apiRequest(endpoint, "relays/1", {
+      await apiRequest(endpoint, `relays/${channel}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -263,7 +274,7 @@ export async function setLiveRelay(
     if (
       root.apiVersion !== 1 ||
       root.applied !== true ||
-      root.channel !== 1 ||
+      root.channel !== channel ||
       root.requestId !== requestId ||
       root.bootId !== bootId ||
       root.requestedState !== on
@@ -272,7 +283,8 @@ export async function setLiveRelay(
         "ESP32 nepotvrdilo tento příkaz GPIO. Obnovte stav.",
       );
     const relay = parseRelay(
-      object(root.relays)["1"] || object(root.lighting).kitchenLed,
+      object(root.relays)[String(channel)] ||
+        (channel === 1 ? object(root.lighting).kitchenLed : null),
     );
     if (relay.on !== on || relay.version !== root.appliedVersion)
       throw new Esp32Error(

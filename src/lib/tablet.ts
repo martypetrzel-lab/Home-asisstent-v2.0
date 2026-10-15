@@ -5,9 +5,9 @@ export const tabletDefaults = {
   touchSize: 52,
   flipped: false,
   landscape: true,
-  nightEnabled: false,
+  nightEnabled: true,
   nightStart: "22:00",
-  nightEnd: "07:00",
+  nightEnd: "05:00",
   autoDim: false,
   dimAfter: 60,
   saverAfter: 120,
@@ -33,9 +33,9 @@ export function parseTabletPreferences(
       : 52,
     flipped: value.flipped === true,
     landscape: value.landscape !== false,
-    nightEnabled: value.nightEnabled === true,
+    nightEnabled: value.nightEnabled !== false,
     nightStart: clock("nightStart", "22:00"),
-    nightEnd: clock("nightEnd", "07:00"),
+    nightEnd: clock("nightEnd", "05:00"),
     autoDim: value.autoDim === true,
     dimAfter: [30, 60, 120, 300].includes(Number(value.dimAfter))
       ? Number(value.dimAfter)

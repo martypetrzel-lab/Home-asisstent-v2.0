@@ -32,10 +32,10 @@ export async function POST(request: Request) {
       {
         error: {
           message:
-            error instanceof Error ? error.message : "Synchronizace selhala.",
+            error instanceof CloudError ? error.message : "Úložiště synchronizace není dostupné.",
         },
       },
-      error instanceof CloudError ? error.status : 400,
+      error instanceof CloudError ? error.status : 503,
     );
   }
 }

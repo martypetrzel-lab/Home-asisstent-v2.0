@@ -13,7 +13,8 @@ import type { HistoryRecord, HistoryRange } from "@/types";
 import { usePreferences } from "@/hooks/use-home";
 import { ChartNoAxesCombined } from "lucide-react";
 import { number, time } from "@/lib/utils";
-type Metric = "temperature" | "humidity" | "solar" | "production" | "battery";
+type Metric =
+  "temperature" | "pressure" | "humidity" | "solar" | "production" | "battery";
 export function HistoryChart({
   data,
   metric = "temperature",
@@ -34,11 +35,31 @@ export function HistoryChart({
         <span>
           {metric === "battery"
             ? "Měření baterie bude dostupné po instalaci senzoru."
-            : "Připojte zdroj dat nebo zapněte demo režim."}
+            : "Graf se objeví po prvních dostupných měřeních."}
         </span>
       </div>
     );
   const temperature = metric === "temperature";
+  const gappedData = data.flatMap((d, i) =>
+    d.gapBefore && i > 0
+      ? [
+          {
+            timestamp: new Date(
+              (Date.parse(data[i - 1].timestamp) + Date.parse(d.timestamp)) / 2,
+            ).toISOString(),
+            indoorTemperature: null,
+            outdoorTemperature: null,
+            indoorPressure: null,
+            outdoorPressure: null,
+            indoorHumidity: null,
+            outdoorHumidity: null,
+            solarPower: null,
+            solarEnergy: null,
+          },
+          d,
+        ]
+      : [d],
+  );
   const dailyData =
     metric === "production"
       ? Array.from(
@@ -51,10 +72,10 @@ export function HistoryChart({
             ]),
           ).values(),
         )
-      : data;
+      : gappedData;
   const chartData =
     temperature && preferences.unit === "fahrenheit"
-      ? data.map((d) => ({
+      ? gappedData.map((d) => ({
           ...d,
           indoorTemperature:
             d.indoorTemperature === null
@@ -68,23 +89,29 @@ export function HistoryChart({
       : dailyData;
   const keys = temperature
     ? ["indoorTemperature", "outdoorTemperature"]
-    : metric === "humidity"
-      ? ["indoorHumidity", "outdoorHumidity"]
-      : metric === "production"
-        ? ["solarEnergy"]
-        : ["solarPower"];
+    : metric === "pressure"
+      ? ["indoorPressure"]
+      : metric === "humidity"
+        ? ["outdoorHumidity"]
+        : metric === "production"
+          ? ["solarEnergy"]
+          : ["solarPower"];
   const unit = temperature
     ? preferences.unit === "fahrenheit"
       ? "°F"
       : "°C"
-    : metric === "humidity"
-      ? "%"
-      : metric === "production"
-        ? "Wh"
-        : "W";
+    : metric === "pressure"
+      ? "hPa"
+      : metric === "humidity"
+        ? "%"
+        : metric === "production"
+          ? "Wh"
+          : "W";
   const labels: Record<string, string> = {
     indoorTemperature: "Uvnitř",
     outdoorTemperature: "Venku",
+    indoorPressure: "Uvnitř",
+    outdoorPressure: "Venku",
     indoorHumidity: "Uvnitř",
     outdoorHumidity: "Venku",
     solarPower: "Solární výkon",
@@ -98,7 +125,7 @@ export function HistoryChart({
     <div
       className={compact ? "chart compact-chart" : "chart"}
       role="img"
-      aria-label={`Graf ${temperature ? "teploty" : metric === "humidity" ? "vlhkosti" : "solární energie"}; ${preferences.mode === "demo" ? "simulovaná data" : "měřená data"}`}
+      aria-label={`Graf ${temperature ? "teploty" : metric === "pressure" ? "tlaku" : metric === "humidity" ? "vlhkosti" : "solární energie"}; ${preferences.mode === "demo" ? "simulovaná data" : "měřená data"}`}
     >
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <AreaChart
@@ -170,6 +197,7 @@ export function HistoryChart({
               key={key}
               dataKey={key}
               type="monotone"
+              connectNulls={false}
               stroke={colors[i]}
               fill={`url(#fill-${key}-${compact})`}
               strokeWidth={2}

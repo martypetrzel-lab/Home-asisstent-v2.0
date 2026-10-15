@@ -1,6 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 mkdirSync("test-results", { recursive: true });
+const jsonInclude=["firmware/.pio/libdeps/esp32dev/ArduinoJson/src",join(homedir(),"Documents/Arduino/libraries/ArduinoJson/src")].find(p=>existsSync(join(p,"ArduinoJson.h")));
+if(!jsonInclude)throw new Error("Nainstalujte ArduinoJson nebo sestavte PlatformIO knihovny.");
 const win = process.platform === "win32",
   file = `test-results/firmware-core${win ? ".exe" : ""}`;
 const compiler = win ? "py" : "g++";
@@ -12,7 +16,7 @@ const args = [
   "-Wall",
   "-Wextra",
   "-Ifirmware/arduino/HomeAssistant_ESP32_v2",
-  "-Ifirmware/.pio/libdeps/esp32dev/ArduinoJson/src",
+  "-I"+jsonInclude,
   "firmware/tests/core.cpp",
   "-o",
   file,

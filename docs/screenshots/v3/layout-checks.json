@@ -1,0 +1,186 @@
+{
+  "pages": [
+    {
+      "tab": "Přehled",
+      "outside": [],
+      "page": [
+        1024,
+        600
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "tab": "Domácnost",
+      "outside": [],
+      "page": [
+        1024,
+        600
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "tab": "Energie",
+      "outside": [],
+      "page": [
+        1024,
+        600
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "tab": "Historie",
+      "outside": [],
+      "page": [
+        1024,
+        600
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "tab": "Nastavení",
+      "outside": [],
+      "page": [
+        1024,
+        600
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "tab": "Přehled",
+      "outside": [],
+      "page": [
+        1280,
+        800
+      ],
+      "viewport": [
+        1280,
+        800
+      ]
+    },
+    {
+      "tab": "Domácnost",
+      "outside": [],
+      "page": [
+        1280,
+        800
+      ],
+      "viewport": [
+        1280,
+        800
+      ]
+    },
+    {
+      "tab": "Energie",
+      "outside": [],
+      "page": [
+        1280,
+        800
+      ],
+      "viewport": [
+        1280,
+        800
+      ]
+    },
+    {
+      "tab": "Historie",
+      "outside": [],
+      "page": [
+        1280,
+        800
+      ],
+      "viewport": [
+        1280,
+        800
+      ]
+    },
+    {
+      "tab": "Nastavení",
+      "outside": [],
+      "page": [
+        1280,
+        800
+      ],
+      "viewport": [
+        1280,
+        800
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "section": "Vzhled a displej",
+      "outside": [],
+      "panel": [
+        374,
+        374
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "section": "Hodiny a noční klid",
+      "outside": [],
+      "panel": [
+        374,
+        374
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "section": "Moje domácnost",
+      "outside": [],
+      "panel": [
+        374,
+        374
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "section": "Připojení a zařízení",
+      "outside": [],
+      "panel": [
+        374,
+        379
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    },
+    {
+      "section": "Soukromí a účet",
+      "outside": [],
+      "panel": [
+        374,
+        374
+      ],
+      "viewport": [
+        1024,
+        600
+      ]
+    }
+  ]
+}

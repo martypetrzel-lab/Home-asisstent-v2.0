@@ -35,6 +35,10 @@ export function LiveAccess() {
       const value = await response.json();
       if (!response.ok) throw new Error(value.error || "Přihlášení selhalo.");
       setPassword("");
+      if (logout) {
+        window.dispatchEvent(new Event("home-session-expired"));
+        return;
+      }
       await client.invalidateQueries({ queryKey: ["session"] });
       await client.invalidateQueries({ queryKey: ["home", "live"] });
       await client.invalidateQueries({ queryKey: ["esp32-history"] });
@@ -52,12 +56,12 @@ export function LiveAccess() {
   }
   return (
     <div className="live-access">
-      <strong>Přístup k serverové bráně</strong>
+      <strong>Přihlášení do domácnosti</strong>
       <p className="note">
         {session.data?.authenticated
-          ? "Přihlášeno · relé potvrzuje příkaz GPIO, fyzický stav lampy se neměří."
+          ? "Jste přihlášení. Váš domov máte pod kontrolou."
           : session.data?.configured
-            ? "Přihlaste se heslem dashboardu. Klíč ESP32 zůstává pouze na serveru."
+            ? "Zadejte heslo a otevřete svůj domov."
             : "Správce musí nastavit server podle dokumentace. Přístup zůstává zamčený."}
       </p>
       {session.data?.authenticated ? (
@@ -66,7 +70,7 @@ export function LiveAccess() {
           disabled={pending}
           onClick={() => void authenticate(true)}
         >
-          Odhlásit ovládání
+          Odhlásit se
         </Button>
       ) : (
         <form
@@ -89,7 +93,7 @@ export function LiveAccess() {
             type="submit"
             disabled={pending || !password || !session.data?.configured}
           >
-            {pending ? "Přihlašuji…" : "Přihlásit ovládání"}
+            {pending ? "Přihlašuji…" : "Otevřít domov"}
           </Button>
         </form>
       )}

@@ -8,10 +8,13 @@ export async function cloudForward(request: Request, route: string) {
     for (const [key, value] of query) {
       if (
         route !== "history" ||
-        key !== "limit" ||
-        !/^\d{1,3}$/.test(value) ||
-        Number(value) < 1 ||
-        Number(value) > 288
+        !(
+          (key === "limit" &&
+            /^\d{1,3}$/.test(value) &&
+            Number(value) >= 1 &&
+            Number(value) <= 288) ||
+          (key === "range" && ["1h", "24h", "7d", "30d"].includes(value))
+        )
       )
         throw new CloudError("Neplatný parametr API.");
     }
@@ -39,7 +42,12 @@ export async function cloudForward(request: Request, route: string) {
       );
     }
     if (route === "history")
-      return jsonResponse(store.history(Number(query.get("limit") || 288)));
+      return jsonResponse(
+        store.history(
+          Number(query.get("limit") || 288),
+          query.get("range") || "24h",
+        ),
+      );
     const state = store.state();
     if (route === "state") return jsonResponse(state);
     if (route === "health")
