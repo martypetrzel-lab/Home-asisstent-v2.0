@@ -79,11 +79,12 @@ test("demo histories cover requested ranges with bounded sensor values", () => {
       data.history.every(
         (d) =>
           d.solarPower !== null &&
-          d.indoorHumidity !== null &&
+          d.indoorPressure != null &&
           d.solarPower >= 0 &&
           d.solarPower <= 10 &&
-          d.indoorHumidity >= 0 &&
-          d.indoorHumidity <= 100,
+          d.indoorPressure >= 300 &&
+          d.indoorPressure <= 1100 &&
+          d.indoorHumidity === null,
       ),
     );
   }

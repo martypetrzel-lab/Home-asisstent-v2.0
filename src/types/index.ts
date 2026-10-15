@@ -8,6 +8,8 @@ export interface DeviceStatus {
   bootId?: string;
 }
 export interface IndoorClimate {
+  pressure?: number | null;
+  sensorModel?: string;
   temperature: number | null;
   humidity: number | null;
   ageMs?: number | null;
@@ -85,6 +87,8 @@ export interface HistoryRecord {
   gapBefore?: boolean;
   indoorTemperature: number | null;
   outdoorTemperature: number | null;
+  indoorPressure?: number | null;
+  outdoorPressure?: number | null;
   indoorHumidity: number | null;
   outdoorHumidity: number | null;
   solarPower: number | null;

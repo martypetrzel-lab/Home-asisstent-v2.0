@@ -73,6 +73,8 @@ function climate(value: unknown) {
   return {
     temperature: available ? finite(raw.temperatureC, -40, 80) : null,
     humidity: available ? finite(raw.humidityPct, 0, 100) : null,
+    pressure: available ? finite(raw.pressureHpa, 300, 1100) : null,
+    sensorModel: text(raw.sensorModel) || undefined,
     ageMs: age,
     available,
     minimum: finite(raw.minTemperatureC, -40, 80),
@@ -211,6 +213,8 @@ export function parseHistory(value: unknown) {
         gapBefore: r.gapBefore === true,
         indoorTemperature: finite(r.indoorTemperature, -40, 80),
         outdoorTemperature: finite(r.outdoorTemperature, -40, 80),
+        indoorPressure: finite(r.indoorPressure, 300, 1100),
+        outdoorPressure: finite(r.outdoorPressure, 300, 1100),
         indoorHumidity: finite(r.indoorHumidity, 0, 100),
         outdoorHumidity: finite(r.outdoorHumidity, 0, 100),
         solarPower: finite(r.solarPower, -100, 100),

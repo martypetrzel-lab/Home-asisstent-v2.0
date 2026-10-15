@@ -230,6 +230,8 @@ export class CloudStore {
               uptimeSeconds: state.uptimeSeconds,
               indoorTemperature: parsed.indoor.temperature,
               outdoorTemperature: parsed.outdoor.temperature,
+              indoorPressure: parsed.indoor.pressure ?? null,
+              outdoorPressure: parsed.outdoor.pressure ?? null,
               indoorHumidity: parsed.indoor.humidity,
               outdoorHumidity: parsed.outdoor.humidity,
               solarPower: parsed.solar.power,
@@ -380,6 +382,7 @@ export class CloudStore {
         for (const name of [
           "temperatureC",
           "humidityPct",
+          "pressureHpa",
           "voltageV",
           "shuntVoltageMv",
           "currentMa",

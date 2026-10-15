@@ -263,10 +263,20 @@ export function useHome(range: HistoryRange = "24h") {
       ...available,
       indoor: fresh(available.indoor.ageMs)
         ? available.indoor
-        : { ...available.indoor, temperature: null, humidity: null },
+        : {
+            ...available.indoor,
+            temperature: null,
+            humidity: null,
+            pressure: null,
+          },
       outdoor: fresh(available.outdoor.ageMs)
         ? available.outdoor
-        : { ...available.outdoor, temperature: null, humidity: null },
+        : {
+            ...available.outdoor,
+            temperature: null,
+            humidity: null,
+            pressure: null,
+          },
       solar: fresh(available.solar.ageMs)
         ? available.solar
         : {

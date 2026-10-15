@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   CloudRain,
   CloudSun,
+  Gauge,
   Droplets,
   Flower2,
   Sun,
@@ -77,8 +78,8 @@ export function TabletDashboard() {
                 <sup>°{preferences.unit === "fahrenheit" ? "F" : "C"}</sup>
               </strong>
               <p>
-                <Droplets size={16} />
-                {number(data.indoor.humidity, 0)} % <span>vlhkost</span>
+                <Gauge size={16} />
+                {number(data.indoor.pressure, 1)} hPa <span>tlak</span>
               </p>
             </div>
             <div className="outdoor-reading">
@@ -92,8 +93,8 @@ export function TabletDashboard() {
                   : temp(data.outdoor.temperature)}
               </strong>
               <p>
-                <Droplets size={14} />
-                {number(data.outdoor.humidity, 0)} %
+                <Gauge size={14} />
+                {number(data.outdoor.pressure, 1)} hPa
               </p>
             </div>
           </div>
@@ -160,7 +161,7 @@ export function TabletDashboard() {
             {data.indoor.temperature == null
               ? "Čekáme na čerstvá měření"
               : "Vlastní senzory · skutečné klima"}
-            <span>2 × DHT22</span>
+            <span>2 × BMP280</span>
           </div>
         </section>
         <section className="weather-scene">

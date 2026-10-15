@@ -467,9 +467,10 @@ export function SettingsPanel() {
                   není měřený.
                 </p>
                 <p className="note">
-                  DHT22: uvnitř GPIO27, venku GPIO32. INA219: SDA GPIO21, SCL
-                  GPIO22. OTA aktualizace zůstávají dostupné podle konfigurace
-                  zařízení.
+                  BMP280 uvnitř: SDA21 / SCL22. BMP280 venku: SDA32 / SCL27.
+                  INA219 sdílí SDA21 / SCL22. Tlak je měřený v místě čidla, bez
+                  přepočtu na hladinu moře. OTA aktualizace zůstávají dostupné
+                  podle konfigurace zařízení.
                 </p>
               </Setting>
             </>

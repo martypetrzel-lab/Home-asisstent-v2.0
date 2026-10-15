@@ -2,8 +2,8 @@ import type { HomeSnapshot } from "@/types";
 export function emptySnapshot(): HomeSnapshot {
   return {
     device: { connected: false, name: "ESP32-WROOM", lastUpdate: null },
-    indoor: { temperature: null, humidity: null },
-    outdoor: { temperature: null, humidity: null, trend: null },
+    indoor: { temperature: null, humidity: null, pressure: null },
+    outdoor: { temperature: null, humidity: null, pressure: null, trend: null },
     solar: { power: null, voltage: null, current: null, dailyEnergy: null },
     battery: { voltage: null, charge: null, measured: false },
     powerSource: "unknown",

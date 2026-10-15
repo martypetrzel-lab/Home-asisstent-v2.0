@@ -29,6 +29,20 @@ const state = {
     },
   },
 };
+Object.assign(state.climate.indoor, {
+  sensorModel: "BMP280",
+  pressureHpa: 992.4,
+  humidityPct: null,
+});
+Object.assign(state.climate.outdoor, {
+  sensorModel: "BMP280",
+  pressureHpa: 992.8,
+  humidityPct: null,
+  temperatureC: 12,
+  ageMs: 0,
+  available: true,
+  stale: false,
+});
 let sequence = 0;
 let ack: unknown = null;
 async function push() {
