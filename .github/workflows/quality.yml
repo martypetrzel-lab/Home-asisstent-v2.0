@@ -35,6 +35,7 @@ jobs:
       - run: pio run -d firmware
       - run: pio run -d firmware -t buildfs
       - run: node scripts/test-firmware-core.mjs
+      - run: node scripts/test-bounded-dht.mjs
   arduino:
     runs-on: ubuntu-latest
     steps:
@@ -59,4 +60,4 @@ jobs:
         run: |
           python scripts/bmp280-firmware.py
           arduino-cli lib install "Adafruit BMP280 Library@2.6.8"
-          arduino-cli compile --jobs 4 --fqbn esp32:esp32:esp32da firmware/arduino/HomeAssistant_ESP32_WROOM_DA_BMP280_DHT22
+          arduino-cli compile --jobs 4 --fqbn esp32:esp32:esp32da firmware/arduino/HomeAssistant_ESP32_WROOM_DA_BMP280_DHT22_GPIO27

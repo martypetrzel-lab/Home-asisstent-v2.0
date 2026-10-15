@@ -8,8 +8,20 @@ options = parser.parse_args()
 
 root = Path(__file__).resolve().parents[1]
 source = (root/'firmware/arduino/HomeAssistant_ESP32_v3_0_0/HomeAssistant_ESP32_v3_0_0.ino').read_text(encoding='utf8')
-source = source.replace('3.0.0-railway', '3.1.1-bmp280-dht22')
-source = source.replace('#include <DHT.h>', '#include <DHT.h>\n#include <Adafruit_BMP280.h>')
+source = source.replace('3.0.0-railway', '3.1.3-dht27-timeout-fix')
+source = source.replace('constexpr int IndoorDht = 27, OutdoorDht = 32, Sda = 21, Scl = 22;', 'constexpr int OutdoorDht = 27, Sda = 21, Scl = 22;')
+source = re.sub(r'constexpr bool uniquePins\(\) \{.*?\n\}', '''constexpr bool uniquePins() {
+  const int pins[] = {OutdoorDht, Sda, Scl, Relay, Relay2, Button, PowerStatus};
+  for (unsigned i = 0; i < sizeof(pins)/sizeof(pins[0]); ++i)
+    for (unsigned j = i + 1; j < sizeof(pins)/sizeof(pins[0]); ++j)
+      if (pins[i] == pins[j]) return false;
+  return true;
+}''', source, count=1, flags=re.S)
+source = source.replace('outdoor DHT22 remains on GPIO32.', 'outdoor DHT22 uses GPIO27; GPIO32 is unused.')
+bounded = (root/'firmware/v3/bounded-dht.h').read_text(encoding='utf8')
+bounded += '\n' + (root/'firmware/v3/bounded-dht.cpp').read_text(encoding='utf8').replace('#include "bounded-dht.h"','')
+bounded += '\n/*\n' + (root/'firmware/v3/bounded-dht-LICENSE.txt').read_text(encoding='utf8') + '\n*/\n'
+source = source.replace('#include <DHT.h>', '#include <Adafruit_BMP280.h>\n' + bounded)
 source = source.replace('Button = 25', 'Button = 23') # GPIO25 belongs to the WROOM-DA antenna switch.
 source = source.replace('ESP32 Dev Module, core Espressif', 'ESP32-WROOM-DA Module, core Espressif')
 source = source.replace('float temperature = missing(), humidity = missing(), minimum = missing(),', 'bool pressureSensor = false;\n  float pressure = missing();\n  float temperature = missing(), humidity = missing(), minimum = missing(),')
@@ -26,7 +38,7 @@ source = source.replace('  void read(float t, float h, uint64_t now) {', '''  vo
   void read(float t, float h, uint64_t now) {''')
 source = source.replace('  jsonNumber(o["humidityPct"], valid ? c.humidity : missing());', '  o["sensorModel"] = c.pressureSensor ? "BMP280" : "DHT22";\n  jsonNumber(o["pressureHpa"], valid ? c.pressure : missing());\n  jsonNumber(o["humidityPct"], valid ? c.humidity : missing());')
 source = source.replace('static DHT indoor(cfg::IndoorDht, DHT22), outdoor(cfg::OutdoorDht, DHT22);', '''static Adafruit_BMP280 indoor(&Wire);
-static DHT outdoor(cfg::OutdoorDht, DHT22);
+static BoundedDHT outdoor(cfg::OutdoorDht, BDHT22);
 static bool indoorReady = false;
 static bool beginBmp(Adafruit_BMP280 &bmp) {
   if (!bmp.begin(0x76) && !bmp.begin(0x77)) return false;
@@ -47,8 +59,8 @@ source = source.replace('o["indoorHumidity"]', 'o["indoorPressure"]')
 source = source.replace('/history0.bin', '/mixed-history0.bin').replace('/history1.bin', '/mixed-history1.bin')
 source = source.replace('Vnitřní DHT22', 'Vnitřní BMP280').replace('vnitřního DHT22', 'vnitřního BMP280')
 source = source.replace('DHT sensor library 1.4.7,', 'DHT sensor library 1.4.7, Adafruit BMP280 Library 2.6.8,')
-source = source.replace('DHT22 uvnitr GPIO27, venku GPIO32; INA219 SDA21 / SCL22.', 'BMP280 uvnitr SDA21/SCL22; DHT22 venku DATA32; INA219 SDA21/SCL22.')
-source = '/* ESP32-WROOM-DA: indoor BMP280 SDA21/SCL22; outdoor DHT22 DATA32.\nRelays: 26/33 active LOW. INA219 shares the BMP280 bus. Pressure is station pressure, hPa.\nSelect ESP32-WROOM-DA Module, 4MB, PSRAM disabled, OTA partition.\n*/\n' + source
+source = source.replace('DHT22 uvnitr GPIO27, venku GPIO32; INA219 SDA21 / SCL22.', 'BMP280 uvnitr SDA21/SCL22; DHT22 venku DATA27; INA219 SDA21/SCL22.')
+source = '/* ESP32-WROOM-DA: indoor BMP280 SDA21/SCL22; outdoor DHT22 DATA27.\nRelays: 26/33 active LOW. INA219 shares the BMP280 bus. Pressure is station pressure, hPa.\nSelect ESP32-WROOM-DA Module, 4MB, PSRAM disabled, OTA partition.\n*/\n' + source
 match = re.search(r'const uint8_t TABLET_HTML_GZIP\[\] PROGMEM = \{(.*?)\};', source, re.S)
 page = gzip.decompress(bytes(int(x,16) for x in re.findall(r'0x([a-fA-F0-9]{2})', match[1]))).decode()
 for name in ['indoor']:
@@ -57,7 +69,7 @@ page = page.replace('nf(valid?v.humidityPct:null,0)', "nf(valid?(name==='indoor'
 packed = gzip.compress(page.encode(), compresslevel=9, mtime=0)
 array = 'const uint8_t TABLET_HTML_GZIP[] PROGMEM = {\n' + '\n'.join('  '+','.join('0x%02x'%b for b in packed[i:i+20])+',' for i in range(0,len(packed),20))+'\n};'
 source = source[:match.start()] + array + source[match.end():]
-name = 'HomeAssistant_ESP32_WROOM_DA_BMP280_DHT22'
+name = 'HomeAssistant_ESP32_WROOM_DA_BMP280_DHT22_GPIO27'
 out = root/'firmware/arduino'/name
 out.mkdir(exist_ok=True)
 (out/(name+'.ino')).write_text(source, encoding='utf8')
