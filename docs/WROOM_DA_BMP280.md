@@ -1,45 +1,46 @@
-# ESP32-WROOM-DA · dvě čidla BMP280
+# ESP32-WROOM-DA · BMP280 uvnitř a DHT22 venku
 
-Kompletní sketch: `exports/HomeAssistant_ESP32_WROOM_DA_BMP280/HomeAssistant_ESP32_WROOM_DA_BMP280.ino`.
-Soukromá kopie má převzatou Wi-Fi, OTA a cloudový token z předchozího exportu. Pokud se token od té doby změnil, musí HOME_CLOUD_TOKEN souhlasit s aktuálním DEVICE_TOKEN na Railway. Heslo webu se do ESP nenahrává.
-Veřejná kopie ve `firmware/arduino/HomeAssistant_ESP32_WROOM_DA_BMP280/` nemá skutečná hesla.
+Aktuální varianta podle upřesnění z 15. 10. 2026: **uvnitř BMP280, venku ponechat původní DHT22**.
+
+Kompletní soukromý sketch: `exports/HomeAssistant_ESP32_WROOM_DA_BMP280_DHT22/HomeAssistant_ESP32_WROOM_DA_BMP280_DHT22.ino`.
+Má převzatou Wi-Fi, OTA a cloudový token z předchozího exportu. Správnost tokenu proti Railway byla ověřena bez vložení telemetrie či povelů. Heslo webu se do ESP nenahrává. Veřejná kopie ve `firmware/arduino/HomeAssistant_ESP32_WROOM_DA_BMP280_DHT22/` neobsahuje skutečná hesla.
 
 ## Zapojení
 
-Při vypnutém napájení přepojte původní DHT22 na BMP280 podle tabulky. Nejde o stejné zapojení jako u DHT.
-
-| Vývod čidla | BMP280 uvnitř | BMP280 venku |
+| Čidlo | Vývod | ESP32 |
 |---|---|---|
-| VCC | 3V3 | 3V3 |
-| GND | GND | GND |
-| SDA | GPIO21 | GPIO32 |
-| SCL | GPIO22 | GPIO27 |
+| BMP280 uvnitř | VCC | 3V3 |
+| BMP280 uvnitř | GND | GND |
+| BMP280 uvnitř | SDA | GPIO21 |
+| BMP280 uvnitř | SCL | GPIO22 |
+| DHT22 venku | DATA | GPIO32 (původní pin) |
+| DHT22 venku | VCC / GND | 3V3 / GND |
 
-INA219 může zůstat na GPIO21/22, adresa 0x40. Relé 1 (světlo pod troubou) GPIO26, relé 2 (volné) GPIO33. Obě relé jsou aktivní LOW a při startu vypnutá. GPIO2 a GPIO25 používá WROOM-DA pro přepínání antén; nepřipojujte na ně další zařízení. Volitelné tlačítko je vypnuté.
+BMP280 na I²C zkouší adresy 0x76 i 0x77. INA219 zůstává na SDA21/SCL22, adresa 0x40. GPIO27 se pro čidla nepoužívá. U samostatného DHT22 bez modulu musí být mezi DATA a 3V3 pull-up 4,7–10 kΩ; původní funkční zapojení venkovního čidla lze zachovat.
 
-Čidla používají dvě oddělené I²C sběrnice a mohou mít stejnou adresu. Firmware na každé zkouší 0x76 i 0x77. Čtyřpinové moduly napájejte z 3,3 V, aby sběrnice měla 3,3V logiku. I²C je určené pro krátká propojení; spolehlivost dlouhého vedení k venkovnímu čidlu je nutné ověřit v místě instalace.
+Relé 1 (světlo pod troubou) GPIO26, relé 2 (volné) GPIO33. Obě aktivní LOW, při startu vypnutá. GPIO2 a GPIO25 používá WROOM-DA pro antény. Volitelné tlačítko je vypnuté, rezervovaný pin GPIO23.
 
 ## Arduino IDE
 
-1. Nainstalujte balíček **esp32 by Espressif Systems 3.3.8**.
-2. Vyberte **ESP32-WROOM-DA Module**, 4 MB flash, PSRAM vypnutá a oddíly **Default 4MB with spiffs (1.2MB APP/1.5MB SPIFFS)** s OTA.
-3. Knihovny: **Adafruit BMP280 Library 2.6.8**, **ArduinoJson 7.4.3**, **Adafruit INA219 1.2.3**, **Adafruit BusIO 1.17.4**, **Adafruit Unified Sensor 1.1.15**.
-4. Otevřete pouze kompletní `.ino` v jeho stejnojmenné složce. Žádné další `.h` ani `.cpp` nejsou potřeba.
-5. Vyberte port a nahrajte. Nahrání do skutečného ESP provádí uživatel.
+1. Balíček **esp32 by Espressif Systems 3.3.8**.
+2. Deska **ESP32-WROOM-DA Module**, flash 4 MB, PSRAM vypnutá. Oddíly s OTA podle výsledku kompilace níže.
+3. Knihovny: **Adafruit BMP280 Library 2.6.8**, **DHT sensor library 1.4.7**, **ArduinoJson 7.4.3**, **Adafruit INA219 1.2.3**, **Adafruit BusIO 1.17.4**, **Adafruit Unified Sensor 1.1.15**.
+4. Otevřete kompletní `.ino` v jeho stejnojmenné složce. Žádné další `.h`, `.cpp` ani HTML nejsou potřeba.
+5. Vyberte port a nahrajte ručně. Automatické nahrání do desky neproběhlo.
 
-## Tablet
+## Tablet a místní web
 
-- Přehled ukazuje teplotu a **tlak v hPa** uvnitř i venku.
-- Historie nabízí teplotu, tlak, solární výkon a energii. Staré záznamy bez tlaku zůstávají bez hodnoty; stará vlhkost se nepřevádí na tlak.
-- BMP280 neměří vlhkost. Vlhkost z internetové předpovědi může zůstat v sekci počasí.
-- Tlak je skutečně naměřený v nadmořské výšce čidla, nikoli přepočtený na hladinu moře. Nemusí se rovnat předpovědi počasí.
-- Místní web na `http://IP-ESP32/` také zobrazuje tlak. Jeho vzhled je zachovaný z místního panelu; Railway používá samostatný vzhled verze 3.
-- Místní historie BMP280 používá samostatné soubory, aby se předchozí vlhkost nemohla zaměnit za tlak. Původní záznamy se nemažou.
+- Uvnitř: teplota °C/°F a tlak hPa z BMP280. BMP280 neměří vlhkost.
+- Venku: teplota °C/°F a vlhkost % z DHT22. DHT22 neměří tlak.
+- Historie: teplota obou čidel, tlak uvnitř, vlhkost venku, solární výkon a energie.
+- Staré záznamy bez tlaku se nepřevádějí z vlhkosti. Místní historie má samostatné soubory, původní záznamy se nemažou.
+- Tlak je naměřený v místě čidla, bez přepočtu na hladinu moře.
+- Místní panel `http://IP-ESP32/` rovněž ukazuje uvnitř tlak a venku vlhkost. Railway používá samostatný vzhled verze 3.
 
-Generátor: `python scripts/bmp280-firmware.py`; soukromý export: přidejte `--private` (vyžaduje předchozí soukromý export v3). Původní DHT reference zůstává zachovaná.
+Generátor: `python scripts/bmp280-firmware.py`; soukromý export přidáním `--private` (vyžaduje předchozí soukromý export v3). Původní DHT reference zůstává zachovaná.
 
-## Ověření 15. 10. 2026
+## Ověření
 
-Web: 33 testů, TypeScript, ESLint a produkční sestavení úspěšné. HTTP test na izolovaném serveru ověřil příjem BMP280 dat a potvrzování obou relé. Nový test ověřuje uchování tlaku v cloudu/historii a skrytí neplatného nebo zastaralého tlaku. Tabletový přehled i historie tlaku byly zkontrolované v 1024 × 600; bez posouvání celé stránky. Snímky v `screenshots/bmp280/` používají simulovaná čidla, nikoli skutečné domácí údaje.
+33 testů, TypeScript, ESLint a produkční sestavení webu. Test ukládání ověřuje tlak BMP280 i venkovní vlhkost DHT22 a skrytí zastaralých hodnot. HTTP test používá simulovaná čidla a potvrzení obou relé. Snímky v `screenshots/bmp280/` používají simulovaná domácí data.
 
-Firmware prošel kompilací pro `esp32:esp32:esp32da`, core 3.3.8. Zabírá přibližně 99 % běžného oddílu programu; před dalším rozšiřováním je nutné ověřit velikost. Do skutečné desky nebyl nahrán. Měření, relé, antény, OTA a délku venkovního kabelu je nutné ověřit na konkrétní instalaci.
+Skutečná čidla, relé, dynamická paměť při TLS, antény a OTA je nutné ověřit na fyzickém zařízení. Firmware nebyl do ESP32 nahrán.

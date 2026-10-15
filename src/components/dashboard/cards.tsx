@@ -129,7 +129,9 @@ export function ClimateCard({
       <CardHeading
         icon={outdoor ? <Trees size={19} /> : <House size={19} />}
         title={outdoor ? "Venkovní klima" : "Vnitřní klima"}
-        detail={<span className="sensor-tag">BMP280</span>}
+        detail={
+          <span className="sensor-tag">{outdoor ? "DHT22" : "BMP280"}</span>
+        }
       />
       {climate.temperature === null ? (
         <SensorUnavailableState />
@@ -141,11 +143,13 @@ export function ClimateCard({
           </div>
           <div className="climate-bottom">
             <span>
-              <Gauge size={15} />
-              {climate.pressure == null
+              {outdoor ? <Droplets size={15} /> : <Gauge size={15} />}
+              {(outdoor ? climate.humidity : climate.pressure) == null
                 ? "Nedostupné"
-                : `${number(climate.pressure, 1)} hPa`}{" "}
-              <small>tlak</small>
+                : outdoor
+                  ? `${number(climate.humidity, 0)} %`
+                  : `${number(climate.pressure, 1)} hPa`}{" "}
+              <small>{outdoor ? "vlhkost" : "tlak"}</small>
             </span>
             <span
               className={
@@ -514,7 +518,7 @@ export function DeviceCard({ data }: { data: HomeSnapshot }) {
         <div>
           <h3>ESP32-WROOM-DA</h3>
           <p>
-            2× BMP280 <span>·</span> INA219 <span>·</span> 2× relé
+            BMP280 + DHT22 <span>·</span> INA219 <span>·</span> 2× relé
           </p>
         </div>
         <Link

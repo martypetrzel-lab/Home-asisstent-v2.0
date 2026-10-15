@@ -231,7 +231,7 @@ export function EnergyPage() {
 export function HistoryPage() {
   const [range, setRange] = useState<HistoryRange>("24h"),
     [metric, setMetric] = useState<
-      "temperature" | "pressure" | "solar" | "production"
+      "temperature" | "pressure" | "humidity" | "solar" | "production"
     >("temperature"),
     { data, historyError, mode } = useHome(range);
   return (
@@ -246,14 +246,20 @@ export function HistoryPage() {
           <div className="history-toolbar">
             <div className="metric-tabs">
               {(
-                ["temperature", "pressure", "solar", "production"] as const
+                [
+                  "temperature",
+                  "pressure",
+                  "humidity",
+                  "solar",
+                  "production",
+                ] as const
               ).map((m, i) => (
                 <button
                   key={m}
                   onClick={() => setMetric(m)}
                   className={m === metric ? "active" : ""}
                 >
-                  {["Teplota", "Tlak", "Výkon", "Energie"][i]}
+                  {["Teplota", "Tlak", "Vlhkost", "Výkon", "Energie"][i]}
                 </button>
               ))}
             </div>
@@ -264,7 +270,8 @@ export function HistoryPage() {
               {
                 {
                   temperature: "Teplota doma a venku",
-                  pressure: "Tlak doma a venku · hPa",
+                  pressure: "Tlak uvnitř · BMP280 · hPa",
+                  humidity: "Vlhkost venku · DHT22 · %",
                   solar: "Solární výkon",
                   production: "Denní naměřená energie",
                 }[metric]

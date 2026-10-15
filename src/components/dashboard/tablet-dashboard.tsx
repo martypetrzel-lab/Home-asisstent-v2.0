@@ -93,8 +93,8 @@ export function TabletDashboard() {
                   : temp(data.outdoor.temperature)}
               </strong>
               <p>
-                <Gauge size={14} />
-                {number(data.outdoor.pressure, 1)} hPa
+                <Droplets size={14} />
+                {number(data.outdoor.humidity, 0)} % <span>vlhkost</span>
               </p>
             </div>
           </div>
@@ -161,7 +161,7 @@ export function TabletDashboard() {
             {data.indoor.temperature == null
               ? "Čekáme na čerstvá měření"
               : "Vlastní senzory · skutečné klima"}
-            <span>2 × BMP280</span>
+            <span>BMP280 · DHT22</span>
           </div>
         </section>
         <section className="weather-scene">

@@ -35,9 +35,9 @@ Object.assign(state.climate.indoor, {
   humidityPct: null,
 });
 Object.assign(state.climate.outdoor, {
-  sensorModel: "BMP280",
-  pressureHpa: 992.8,
-  humidityPct: null,
+  sensorModel: "DHT22",
+  pressureHpa: null,
+  humidityPct: 64,
   temperatureC: 12,
   ageMs: 0,
   available: true,
