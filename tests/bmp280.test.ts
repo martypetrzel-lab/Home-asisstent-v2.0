@@ -28,6 +28,8 @@ test("BMP280 pressure survives cloud storage and history; stale pressure is unav
     assert.equal(parsed.indoor.pressure, 992.4);
     assert.equal(parsed.outdoor.pressure, 992.8);
     assert.equal(parsed.indoor.humidity, null);
+    state.climate.indoor.temperatureC = 85;
+    assert.equal(parseLiveSnapshot(state).indoor.temperature, 85);
     const history = parseHistory(store.history(288, "24h", now));
     assert.equal(history.history[0].indoorPressure, 992.4);
     assert.equal(

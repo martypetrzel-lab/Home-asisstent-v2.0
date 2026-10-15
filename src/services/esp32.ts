@@ -71,14 +71,14 @@ function climate(value: unknown) {
     age !== null &&
     age <= 15000;
   return {
-    temperature: available ? finite(raw.temperatureC, -40, 80) : null,
+    temperature: available ? finite(raw.temperatureC, -40, 85) : null,
     humidity: available ? finite(raw.humidityPct, 0, 100) : null,
     pressure: available ? finite(raw.pressureHpa, 300, 1100) : null,
     sensorModel: text(raw.sensorModel) || undefined,
     ageMs: age,
     available,
-    minimum: finite(raw.minTemperatureC, -40, 80),
-    maximum: finite(raw.maxTemperatureC, -40, 80),
+    minimum: finite(raw.minTemperatureC, -40, 85),
+    maximum: finite(raw.maxTemperatureC, -40, 85),
   };
 }
 export function parseRelay(value: unknown): RelayStatus {
@@ -211,8 +211,8 @@ export function parseHistory(value: unknown) {
       {
         timestamp: new Date(epoch * 1000).toISOString(),
         gapBefore: r.gapBefore === true,
-        indoorTemperature: finite(r.indoorTemperature, -40, 80),
-        outdoorTemperature: finite(r.outdoorTemperature, -40, 80),
+        indoorTemperature: finite(r.indoorTemperature, -40, 85),
+        outdoorTemperature: finite(r.outdoorTemperature, -40, 85),
         indoorPressure: finite(r.indoorPressure, 300, 1100),
         outdoorPressure: finite(r.outdoorPressure, 300, 1100),
         indoorHumidity: finite(r.indoorHumidity, 0, 100),
